@@ -8,33 +8,49 @@
 <canvas id="pjs"> </canvas>
 <script type="application/javascript">
 //connect to the chat server
-//TODO how to not hard code this ip?
-var socket = io.connect('http://192.168.1.9:8080/');
+var socket = io.connect('/');
 socket.on('executeTransaction', function (data) {
-  console.log(data);
+  x = data.x; y = data.y;
+  graphicsDirty = true; // trigger redraw
+  console.log("receiving ("+x+","+y+")");
 });
-function send(text){
-  socket.emit('commitTransaction', text);
+function send(x,y){
+  socket.emit('commitTransaction', {x:x,y:y});
 }
 
-var x = 0;
-var t = 0;
-var radius = 200;
+//send updates at most every Xms
+var millisec = 50;
+setInterval(function(){
+    if(positionChanged){
+      console.log("sending ("+x+","+y+")");
+      send(x,y);
+      positionChanged = false;
+    }
+  },millisec);
+
+var x = 0, y = 0, size = 100;
+var graphicsDirty = true;
+var positionChanged = true;
 function sketch(p){
   p.draw = function(){
-    p.fill((Math.sin(t+=0.01)/2+0.5)*255,
-            (Math.sin(t*1.01)/2+0.5)*255,
-            (Math.sin(t*1.02)/2+0.5)*255);
-    x = (x+0.5+(x/1000));
-    p.ellipse( x%(p.width + radius/2),
-               radius/2+(p.height - radius)*(Math.sin(x/400)/2+0.5),
-               radius, radius);
+    if(graphicsDirty){
+      p.fill(255);
+      p.rect(0,0,p.width, p.height);
+      p.fill(0);
+      p.ellipse(x, y, size, size);
+      graphicsDirty = false;
+    }
   };
+  p.mouseDragged = function(){
+    x = p.mouseX; y = p.mouseY;
+    positionChanged = true; // trigger sending over WebSocket
+    graphicsDirty = true; // trigger redraw
+  }
 };
 var canvas = document.getElementById("pjs");  
 var p = new Processing(canvas, sketch);
 p.size(window.innerWidth, window.innerHeight);
-p.background(0);
+
 </script>
 </body>
 </html>

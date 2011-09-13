@@ -5,6 +5,8 @@ var app = require('http').createServer(handler)
 app.listen(8080);
 
 function handler (req, res) {
+  //TODO use one of the static file serving packages,
+  //this code doesn't use the right MIME types
   var filePath = '.' + req.url;
   if (filePath == './')
     filePath = './index.html';

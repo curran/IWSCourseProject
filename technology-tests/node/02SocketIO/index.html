@@ -1,6 +1,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  var socket = io.connect('http://192.168.1.6:8080/');
+  //TODO how to not hard code this ip?
+  var socket = io.connect('http://192.168.1.9:8080/');
   socket.on('executeTransaction', function (data) {
     console.log(data);
   });
