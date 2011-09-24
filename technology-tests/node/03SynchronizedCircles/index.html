@@ -44,7 +44,7 @@ function sketch(p){
   p.mouseDragged = function(){
     x = p.mouseX; y = p.mouseY;
     positionChanged = true; // trigger sending over WebSocket
-    graphicsDirty = true; // trigger redraw
+    //graphicsDirty = true; // trigger redraw
   }
 };
 var canvas = document.getElementById("pjs");  
