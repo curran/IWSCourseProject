@@ -7,3 +7,4 @@ cd ../
 cd 05ASHAttempt_02
 nohup node app.js &
 cd ../
+echo Updated servers running!
