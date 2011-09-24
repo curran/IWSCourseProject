@@ -1,4 +1,4 @@
 git pull
 killall node
-cd 03SynchronizedCircles/; nohup node app.js &; cd ../
-cd 05ASHAttempt_02/; nohup node app.js &; cd ../
+nohup node 03SynchronizedCircles/app.js &
+nohup node 05ASHAttempt_02/app.js &
