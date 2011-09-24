@@ -1,4 +1,9 @@
 git pull
 killall node
-nohup node 03SynchronizedCircles/app.js &
-nohup node 05ASHAttempt_02/app.js &
+export NODE_PATH=`pwd`
+cd 03SynchronizedCircles
+nohup node app.js &
+cd ../
+cd 05ASHAttempt_02
+nohup node app.js &
+cd ../
