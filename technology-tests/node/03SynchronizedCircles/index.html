@@ -28,14 +28,17 @@ setInterval(function(){
     }
   },millisec);
 
-var x = 0, y = 0, size = 100;
+var x = 0, y = 0, size = 10;
 var graphicsDirty = true;
 var positionChanged = true;
 function sketch(p){
+  p.setup = function(){
+    p.background(255);
+  }
   p.draw = function(){
     if(graphicsDirty){
-      p.fill(255);
-      p.rect(0,0,p.width, p.height);
+      //p.fill(255);
+      //p.rect(0,0,p.width, p.height);
       p.fill(0);
       p.ellipse(x, y, size, size);
       graphicsDirty = false;
@@ -44,7 +47,7 @@ function sketch(p){
   p.mouseDragged = function(){
     x = p.mouseX; y = p.mouseY;
     positionChanged = true; // trigger sending over WebSocket
-    //graphicsDirty = true; // trigger redraw
+    graphicsDirty = true; // trigger redraw
   }
 };
 var canvas = document.getElementById("pjs");  
