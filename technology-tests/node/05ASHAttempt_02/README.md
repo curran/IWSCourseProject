@@ -1,5 +1,5 @@
 # ASH
-## API
+## Public API
 On the exported global variable ASH, there are the following methods:
 ### registerPlugin(plugin)
 Args:
@@ -35,3 +35,14 @@ If `property` is not `ASH.TYPE`, ASH will unset the property on the resource (me
 
 ### TYPE
 The property ID used for the type property.
+
+## Private API
+Documentation and explaination of the inner workings of ASH.
+### Private variables in the ASH singleton:
+ - `resourceIdCounter` A counter used by `genResourceId()`
+ - `plugins` The plugins registered with ASH. A map where keys are resource Ids (strings) and values are the objects passed into `registerPlugin(plugin)`
+ - `resourceTypes` A resource type lookup table, can answer 'Which type is resource X?'. A map where keys are resource Ids (strings) and values are resource type Ids (strings).
+ - `resources` The resources in the current ASH state.
+ - 
+### Concepts
+ - "The ASH State" or a given ASH singleton at runtime is the current state of that ASH singleton, defined by what sequence of atomic actions have been performed.
