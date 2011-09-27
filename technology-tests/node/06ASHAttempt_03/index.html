@@ -1,0 +1,148 @@
+<html>
+<title>Hello Web!!</title> 
+<head>
+<script src="/socket.io/socket.io.js"></script>
+<script src="processing-1.3.0.min.js"></script>
+<script src="ash.js"></script>
+
+</head>
+<body style="margin: 0px;"> <!-- to make full screen -->
+<canvas id="pjs"> </canvas>
+<script type="application/javascript">
+/*
+var socket = io.connect('/');
+socket.on('executeTransaction', function (data) {
+  x = data.x; y = data.y;
+  graphicsDirty = true; // trigger redraw
+  console.log("receiving ("+x+","+y+")");
+});
+function send(x,y){
+  socket.emit('commitTransaction', {x:x,y:y});
+}
+
+//send updates at most every Xms
+var millisec = 50;
+setInterval(function(){
+    if(positionChanged){
+      console.log("sending ("+x+","+y+")");
+      send(x,y);
+      positionChanged = false;
+    }
+  },millisec);
+*/
+
+// the ID for the Circle ASH resource type
+var CIRCLE = "Circle";
+
+// default coordinates for new circles
+var defaultX = 5, defaultY = 10;
+
+// circle size
+var circleDiameter = 30;
+
+// a flag to signal redrawing
+var graphicsDirty = true;
+
+// the list of circle objects managed by the plugin,
+// each corresponding to an ASH resource of type CIRCLE
+var circles = {};
+
+//Set up the ASH example plugin for Circles
+ASH.registerPlugin({
+  type: CIRCLE,
+  // the function that creates a resource,
+  // called when the 'type' property is set.
+  create: function(resourceId){
+    // create the local in-memory resource implementation
+    circles[resourceId] = {x:defaultX,y:defaultY,resourceId:resourceId};
+    return {
+      //the function that sets a value on a 'circle'
+      set:function(property,value){
+        //assuming 'property' == 'x' or 'y'
+        circles[resourceId][property] = value;
+        graphicsDirty = true;
+      },
+      //the function that unsets a value on a 'circle'
+      unset:function(property){
+        //assuming 'property' == 'x' or 'y'
+        var defaultValue = property=='x'?defaultX:defaultY;
+        circles[resourceId][property] = defaultValue;
+        graphicsDirty = true;
+      }
+    };
+  },
+  // the function that deletes a resource,
+  // called when the 'type' property is unset.
+  delete:function(resourceId){
+    delete(circles[resourceId]);
+    graphicsDirty = true;
+  }
+});
+
+var positionChanged = true;
+function sketch(p){
+  var circleBeingMoved = undefined;
+  p.setup = function(){
+    p.background(255);
+  };
+  p.draw = function(){
+    if(graphicsDirty){
+      p.fill(255);
+      p.rect(0,0,p.width, p.height);
+      p.fill(0);
+      for(i in circles){
+        var circle = circles[i];
+        p.ellipse(circle.x, circle.y, circleDiameter, circleDiameter);
+      }
+      graphicsDirty = false;
+    }
+  };
+  function getCircleUnderPoint(x,y){
+    for(i in circles){
+      var circle = circles[i];
+      var dist2 = Math.pow(circle.x - x,2)+Math.pow(circle.y - y,2);
+      var radius2 = Math.pow(circleDiameter/2,2);
+      if(dist2 < radius2)
+        return circle;
+    }
+    return undefined;
+  };
+  p.mouseClicked = function(){
+    var circleUnderPoint = getCircleUnderPoint(p.mouseX,p.mouseY);
+    if(circleUnderPoint == undefined){
+      // create a circle
+      var circle = ASH.genResourceId();
+      ASH.set(circle,ASH.TYPE,CIRCLE);
+      ASH.set(circle,'x',p.mouseX);
+      ASH.set(circle,'y',p.mouseY);
+      graphicsDirty = true;
+    }
+    else{
+      // delete the circle under point
+      var circle = circleUnderPoint.resourceId;
+      ASH.unset(circle,'x');
+      ASH.unset(circle,'y');
+      ASH.unset(circle,ASH.TYPE);
+    }
+  };
+  p.mousePressed = function(){
+    circleBeingMoved = getCircleUnderPoint(p.mouseX,p.mouseY);
+  };
+  p.mouseReleased = function(){
+    circleBeingMoved = undefined;
+  };
+  p.mouseDragged = function(){
+    if(circleBeingMoved != undefined){
+      var circle = circleBeingMoved.resourceId;
+      ASH.set(circle,'x',p.mouseX);
+      ASH.set(circle,'y',p.mouseY);
+      graphicsDirty = true;
+    }
+  };
+};
+var canvas = document.getElementById("pjs");  
+var p = new Processing(canvas, sketch);
+p.size(window.innerWidth, window.innerHeight);
+</script>
+</body>
+</html>
