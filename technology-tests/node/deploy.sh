@@ -12,7 +12,7 @@ cd 05ASHAttempt_02
 nohup node app.js &
 cd ../
 
-# running on port 8001
+# running on port 8002
 cd 06ASHAttempt_03
 nohup node app.js &
 cd ../
