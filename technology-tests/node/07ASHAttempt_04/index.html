@@ -112,7 +112,9 @@ function sketch(p){
     else{
       // delete the circle under point
       var circle = circleUnderPoint.resourceId;
+      ASH.begin();
       ASH.unset(circle,ASH.TYPE);
+      ASH.commit();
     }
   };
   p.mousePressed = function(){

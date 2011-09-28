@@ -1,14 +1,16 @@
 var ASH = (function() {
   var socket = io.connect('/');
   socket.on('executeTransaction', function (data) {
-    var tokens = data.split(" ");
     actionSource = 'server';
-    if(tokens[0] == 's')
-    //commitTransaction("s "+resource+" "+property+" "+value);
-      ASH.set(tokens[1],tokens[2],tokens[3]);
-    else if(tokens[0] == 'us')
-    //commitTransaction("us "+resource+" "+property);
-      ASH.unset(tokens[1],tokens[2]);
+    for(i in data){
+      var tokens = data[i].split(" ");
+      if(tokens[0] == 's')
+      //commitTransaction("s "+resource+" "+property+" "+value);
+        ASH.set(tokens[1],tokens[2],tokens[3]);
+      else if(tokens[0] == 'us')
+      //commitTransaction("us "+resource+" "+property);
+        ASH.unset(tokens[1],tokens[2]);
+    }
     actionSource = 'client';
   });
   function send(data){
@@ -39,12 +41,11 @@ var ASH = (function() {
     },
     set: function (resource, property, value) {
       if(actionSource == 'client'){
-        if(inTransaction){
-          //TODO implement the gizmo
-        }
+        if(inTransaction)
+          currentTransaction.push("s "+resource+" "+property+" "+value);
         else
           console.error("ASH.set() was called outside a transaction. This should never happen. ASH.set() is meant to be called only after a call to ASH.begin() and before a subsequent call to ASH.commit(). This ensures that all changes made between begin() and commit() will be taken together, as one atomic set of actions ('actions' meaning calls to set() and unset()).");
-        send("s "+resource+" "+property+" "+value);
+        
       }
       else if(actionSource == 'server'){
         if(property == ASH.TYPE){
@@ -57,11 +58,17 @@ var ASH = (function() {
       }
     },
     unset: function (resource, property) {
-      if(actionSource == 'client')
-        send("us "+resource+" "+property);
+      if(actionSource == 'client'){
+        if(inTransaction)
+          currentTransaction.push("us "+resource+" "+property);
+        else
+          console.error("ASH.unset() was called outside a transaction. This should never happen. ASH.unset() is meant to be called only after a call to ASH.begin() and before a subsequent call to ASH.commit(). This ensures that all changes made between begin() and commit() will be taken together, as one atomic set of actions ('actions' meaning calls to set() and unset()).");
+      }
       else if(actionSource == 'server'){
         if(property == ASH.TYPE)
           plugins[resourceTypes[resource]].delete(resource);
+        else
+          resources[resource].unset(property);
       }
     },
     begin: function (){
@@ -71,7 +78,8 @@ var ASH = (function() {
     },
     commit: function(){
       if(inTransaction){
-        //TODO implement the gizmo
+        send(currentTransaction);
+        currentTransaction = [];
         inTransaction = false;
       }
       else

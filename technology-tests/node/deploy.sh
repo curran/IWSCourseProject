@@ -17,4 +17,9 @@ cd 06ASHAttempt_03
 nohup node app.js &
 cd ../
 
+# running on port 8003
+cd 07ASHAttempt_04
+nohup node app.js &
+cd ../
+
 echo Updated servers running!
