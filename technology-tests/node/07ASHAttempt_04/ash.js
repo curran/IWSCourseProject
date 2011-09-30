@@ -13,11 +13,15 @@ var ASH = (function() {
     }
     actionSource = 'client';
   });
+  
   function send(data){
     socket.emit('commitTransaction', data);
   }
   
-  var resourceIdCounter = 0; // used by ASH.genResourceId()
+  var resourceIdMin = -1; // assigned by the server
+  var resourceIdMax = -1; // assigned by the server
+  var resourceIdCounter = -1; // used by ASH.genResourceId()
+  // always true: (resourceIdMin <= resourceIdCounter < resourceIdMax )
   
   var plugins = {}; // keys = type ids, values = resource factories
   
@@ -50,6 +54,8 @@ var ASH = (function() {
       else if(actionSource == 'server'){
         if(property == ASH.TYPE){
           var type = value;
+          if(resourceTypes[resource] != undefined)
+            console.error("Fatal error: creating a resource twice with the same Id: '"+resource+"'");
           resourceTypes[resource] = type;
           resources[resource] = plugins[type].create(resource);
         }
@@ -66,6 +72,7 @@ var ASH = (function() {
       }
       else if(actionSource == 'server'){
         if(property == ASH.TYPE)
+          // TODO add console.log.error("attempted to delete a non-existent resource, with id '"+resource+"'")
           plugins[resourceTypes[resource]].delete(resource);
         else
           resources[resource].unset(property);

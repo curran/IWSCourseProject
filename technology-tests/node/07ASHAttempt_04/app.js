@@ -12,7 +12,7 @@ function handler (req, res) {
     filePath = './index.html';
   fs.readFile(filePath, function(error, content) {
     res.writeHead(200);
-    res.end(content, 'utf-8');
+    res.end(content, 'utf-8') ;
   });
 }
 
