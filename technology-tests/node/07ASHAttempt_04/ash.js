@@ -1,5 +1,12 @@
 var ASH = (function() {
   var socket = io.connect('/');
+  
+  // sends a transaction to the server for broadcast
+  function send(data){
+    socket.emit('commitTransaction', data);
+  }
+  
+  // receives transactions broadcast from the server
   socket.on('executeTransaction', function (data) {
     actionSource = 'server';
     for(i in data){
@@ -14,13 +21,39 @@ var ASH = (function() {
     actionSource = 'client';
   });
   
-  function send(data){
-    socket.emit('commitTransaction', data);
+  
+  
+  // sends a request for a new range of resource Ids from the server
+  function requestMoreIds(){
+    console.log("in requestMoreIds()");
+    if(waitingForIdRange)
+      console.error("requestMoreIds() called while waitingForIdRange was true! This should never happen.");
+    waitingForIdRange = true;
+    socket.emit('requestMoreIds', {});
   }
+  
+  // receives responses from the server to the request for more Ids
+  socket.on('grantMoreIds', function (data) {
+    if(!waitingForIdRange)
+      console.error("More Ids received from the server without being requested! This should never happen.");
+    waitingForIdRange = false;
+    resourceIdMin = resourceIdCounter = data.resourceIdMin;
+    resourceIdMax = data.resourceIdMax;
+    
+    var callbacksToCall = pendingGenResourceIdCallbacks;
+    pendingGenResourceIdCallbacks = [];
+    for(i in callbacksToCall)
+      ASH.genResourceId(callbacksToCall[i]);
+    
+    console.log("in grantMoreIds! data = ");
+    for(i in data) console.log("  "+i+":"+data[i]);
+  });
   
   var resourceIdMin = -1; // assigned by the server
   var resourceIdMax = -1; // assigned by the server
   var resourceIdCounter = -1; // used by ASH.genResourceId()
+  var waitingForIdRange = false; // used by ASH.genResourceId()
+  var pendingGenResourceIdCallbacks = [];
   // always true: (resourceIdMin <= resourceIdCounter < resourceIdMax )
   
   var plugins = {}; // keys = type ids, values = resource factories
@@ -40,8 +73,17 @@ var ASH = (function() {
     registerPlugin: function (plugin) {
       plugins[plugin.type] = plugin;
     },
-    genResourceId: function(){
-      return (resourceIdCounter++).toString();
+    genResourceId: function(callback){ // callback(resourceId)
+      // if the client has not yet ran out of Ids,
+      if(resourceIdMin <= resourceIdCounter && resourceIdCounter < resourceIdMax)
+        // then pass an available Id to the callback right away
+        callback( (resourceIdCounter++).toString() );
+      else{ // otherwise, if the client has ran out of Ids, then
+        // add the callback to the list of pending genResourceIdCallbacks
+        pendingGenResourceIdCallbacks.push(callback);
+        if(!waitingForIdRange)// then if more Ids have not yet been requested,
+          requestMoreIds(); // request more ids ;)
+      }
     },
     set: function (resource, property, value) {
       if(actionSource == 'client'){

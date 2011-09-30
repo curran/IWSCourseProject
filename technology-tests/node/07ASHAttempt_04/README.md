@@ -19,9 +19,15 @@ The solution in which each client requests a range of resource Ids AFTER it uses
  - resourceIdMax - The maximum (exclusive) of the client's range of resource Ids.
      - "Exclusive" meaning that resourceIdMax cannot be used as a resource Id.
  - resourceIdCounter - A counter which enumerates each available Id in the range between resourceIdMin (inclusive) and resourceIdMax (exclusive).
+ - waitingForIdRange - True after the client has requested a new range of Ids and before the client has received a response to that request from the server.
+ - pendingGenResourceIdCallbacks - A list of callbacks that will be called when the server message containing a new range of Ids is received by the client (only populated when waitingForIdRange = true).
  
 The code must be written such that the callback function passed into ASH.genResourceId(callback) be called only when the following conditions are guaranteed to be true:
  - resourceIdMin and resourceIdMax have been initialized by the server
  - (resourceIdMin <= resourceId < resourceIdMax) = true, where 'resourceId' is the value passed into the callback function.
+ 
+The following new variables have been introduced in the server:
+ - resourceIdCounter - the session-global resource Id counter
+ - resourceIdRangeSize - the number of Ids granted at one time to clients
 
-An elaboration of this solution is to have the client request a new range of Ids BEFORE it uses all of its current range. If a client requests a new range of Ids after the counter is a certain fraction of the way through using its current range of Ids, the client would ALMOST ALWAYS have an Id available in memory (let's call these Ids "buffered Ids"). This means the callback function passed to ASH.genResourceId(callback) would AMLOST ALWAYS be called right away. However, since there is still a chance that all ASH.genResourceId() is called and there are no buffered Ids (e.g. by programmatically creating more new resources than there are buffered Ids), the function must still be asynchronous (so it can wait for the server if it needs to).
+An elaboration of this solution is to have the client request a new range of Ids BEFORE it uses all of its current range. If a client requests a new range of Ids after the counter is a certain fraction of the way through using its current range of Ids, the client would ALMOST ALWAYS have an Id available in memory (let's call these Ids "buffered Ids"). This means the callback function passed to ASH.genResourceId(callback) would AMLOST ALWAYS be called right away. However, since there is still a chance that all ASH.genResourceId() is called and there are no buffered Ids (e.g. by programmatically creating more new resources than there are buffered Ids), the function must still be asynchronous (so it can wait for the server if it needs 

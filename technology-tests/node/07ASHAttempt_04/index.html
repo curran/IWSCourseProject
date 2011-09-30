@@ -98,16 +98,17 @@ function sketch(p){
     var circleUnderPoint = getCircleUnderPoint(p.mouseX,p.mouseY);
     if(circleUnderPoint == undefined){
       // create a circle
-      var circle = ASH.genResourceId();
-      ASH.begin();
-      ASH.set(circle,ASH.TYPE,CIRCLE);
-      ASH.set(circle,'x',p.mouseX);
-      ASH.set(circle,'y',p.mouseY);
-      ASH.set(circle,'r',random255());
-      ASH.set(circle,'g',random255());
-      ASH.set(circle,'b',random255());
-      ASH.commit();
-      graphicsDirty = true;
+      ASH.genResourceId(function(resourceId){
+        ASH.begin();
+        ASH.set(resourceId,ASH.TYPE,CIRCLE);
+        ASH.set(resourceId,'x',p.mouseX);
+        ASH.set(resourceId,'y',p.mouseY);
+        ASH.set(resourceId,'r',random255());
+        ASH.set(resourceId,'g',random255());
+        ASH.set(resourceId,'b',random255());
+        ASH.commit();
+        graphicsDirty = true;
+      });
     }
     else{
       // delete the circle under point

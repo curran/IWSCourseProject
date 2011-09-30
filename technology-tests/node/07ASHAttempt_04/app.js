@@ -16,8 +16,12 @@ function handler (req, res) {
   });
 }
 
-var actions = [];//a sequence of actions for this session
-var sockets = [];
+var actions = [];// a sequence of actions for this session
+var sockets = [];// the list of open WebSockets to clients
+
+var resourceIdCounter = 0; // the session-global resource Id counter
+var resourceIdRangeSize = 50; // the number of Ids granted at one time to clients
+
 io.sockets.on('connection', function (socket) {	
   sockets.push(socket);
   
@@ -37,5 +41,13 @@ io.sockets.on('connection', function (socket) {
     for(i in data)
       actions.push(data[i]);
     console.log(data);
+  });
+  
+  socket.on('requestMoreIds', function(data)/*TODO remove 'data' as an argument*/{
+    resourceIdCounter += resourceIdRangeSize;
+    socket.emit('grantMoreIds',{
+      resourceIdMin:resourceIdCounter - resourceIdRangeSize,
+      resourceIdMax:resourceIdCounter
+    });
   });
 });
