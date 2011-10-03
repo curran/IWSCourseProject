@@ -2,7 +2,7 @@ var app = require('http').createServer(handler)
     , io = require('socket.io').listen(app)
     , fs = require('fs');
 
-app.listen(8003);
+app.listen(8004);
 
 function handler (req, res) {
   //TODO use one of the static file serving packages,
