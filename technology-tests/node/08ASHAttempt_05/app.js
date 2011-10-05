@@ -17,7 +17,6 @@ function handler (req, res) {
 }
 
 var actions = [];// a sequence of actions for this session
-//var actionsMap = {}; // keys = resource Ids, values = property-value maps
 var sockets = [];// the list of open WebSockets to clients
 
 var resourceIdCounter = 0; // the session-global resource Id counter
@@ -40,6 +39,7 @@ function parseAction(actionString){
 
 function storeAction(actionString){
   var action = parseAction(actionString);
+  
   for(var i = 0; i < actions.length; i++){
     var previousAction = parseAction(actions[i]);
     if( previousAction.resource == action.resource &&
@@ -84,7 +84,7 @@ io.sockets.on('connection', function (socket) {
     console.log(data);
   });
   
-  socket.on('requestMoreIds', function(data)/*TODO remove 'data' as an argument*/{
+  socket.on('requestMoreIds', function(){
     resourceIdCounter += resourceIdRangeSize;
     socket.emit('grantMoreIds',{
       resourceIdMin:resourceIdCounter - resourceIdRangeSize,

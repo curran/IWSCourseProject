@@ -2,6 +2,7 @@ var ASH = (function() {
   var socket = io.connect('/');
   
   // sends a transaction to the server for broadcast
+  // 'data' is an array of action 
   function send(data){
     socket.emit('commitTransaction', data);
   }
@@ -29,7 +30,7 @@ var ASH = (function() {
     if(waitingForIdRange)
       console.error("requestMoreIds() called while waitingForIdRange was true! This should never happen.");
     waitingForIdRange = true;
-    socket.emit('requestMoreIds', {});
+    socket.emit('requestMoreIds');
   }
   
   // receives responses from the server to the request for more Ids
