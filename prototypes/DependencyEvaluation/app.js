@@ -1,3 +1,5 @@
+// TODO put this in a MongoDB database, and have the script content backed by Git
+// Curran 10/13/2011
 var scripts =
 [{
   name: 'a',
@@ -61,9 +63,9 @@ function evaluateDependencies(script){
 }
 
 var script = scripts[3];
-console.log(script.name+script.version+' depends on:');
+console.log(script.name+script.version+' depends:');
 var dependencies = evaluateDependencies(script);
 for(var i in dependencies){
   var d = dependencies[i];
-  console.log('  '+d.name+d.version);
+  console.log(' '+d.name+d.version);
 }
