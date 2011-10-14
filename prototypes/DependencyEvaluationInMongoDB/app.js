@@ -3,73 +3,77 @@
 
 var mongoose = require('mongoose'),
     Schema   = mongoose.Schema;
-    
+ 
 var Scripts = new Schema({
   name: String,
-  version: Number
+  version: Number,
+  dependencies: [{ type: Schema.ObjectId, ref: 'Script' }]
 });
-
 
 mongoose.connect('mongodb://localhost/mydatabase');
 mongoose.model('Script',Scripts);
 var Script = mongoose.model('Script');
 
-//clear the DB because this is a test
+//clear and repopulate the DB for testing
 Script.remove({},function(){
   console.log("db cleared");
 
   var script = new Script();
   script.name = 'a';
   script.version = 0.1;
+  script.dependencies = [];
   script.save(function(err){
     if(err){ console.log( err ); }
-    console.log('saved');
-    mongoose.disconnect();
-  });
-
-  Script.find({},function(err, scripts){
-    scripts.forEach(function(script){
-      console.log(script);
+    console.log('saved '+script.name+script.version);
+  
+    
+    script = new Script();
+    script.name = 'b';
+    script.version = 0.1;
+    Script.findOne({name:'a',version:0.1},function(err, depenency){
+      script.dependencies.push(depenency._id);
+      
+      script.save(function(err){
+        if(err){ console.log( err ); }
+        console.log('saved '+script.name+script.version);
+        
+        script = new Script();
+        script.name = 'a';
+        script.version = 0.2;
+       
+        script.save(function(err){
+          if(err){ console.log( err ); }
+          console.log('saved '+script.name+script.version);
+          
+          script = new Script();
+          script.name = 'c';
+          script.version = 0.1;
+          Script.findOne({name:'b',version:0.1},function(err, depenency){
+            script.dependencies.push(depenency._id);
+            
+            Script.findOne({name:'a',version:0.2},function(err, depenency){
+              script.dependencies.push(depenency._id);
+              
+              script.save(function(err){
+                if(err){ console.log( err ); }
+                console.log('saved '+script.name+script.version);
+                
+                Script.find({},function(err, scripts){
+                  scripts.forEach(function(script){
+                    console.log(script);
+                  });
+                  mongoose.disconnect();
+                });
+              });
+            });
+          });
+        });
+      });
     });
   });
 });
+
 /*
-
-var scripts =
-[{
-  name: 'a',
-  version: 0.1,
-  dependencies: []
-},
-{
-  name: 'b',
-  version: 0.1,
-  dependencies: [
-    {name:'a',version:0.1}
-  ]
-},
-{
-  name: 'a',
-  version: 0.2,
-  dependencies: []
-},
-{
-  name: 'c',
-  version: 0.1,
-  dependencies: [
-    {name:'b',version:0.1},
-    {name:'a',version:0.2}
-  ]
-}];
-
-function getScript(scriptInfo){
-  for(i in scripts){
-    var script = scripts[i];
-    if(script.name == scriptInfo.name && script.version == scriptInfo.version)
-      return script;
-  }
-}
-
 // Evaluating dependencies of c0.1 should result in [a0.2,b0.1,c0.1]
 function addDependencies(script, dependencies){
   var scriptAlreadyInDependencies = false;
