@@ -57,13 +57,13 @@ Script.remove({},function(){
               script.save(function(err){
                 if(err){ console.log( err ); }
                 console.log('saved '+script.name+script.version);
-                
+                /*
                 Script.find({},function(err, scripts){
                   scripts.forEach(function(script){
                     console.log(script);
                   });
-                  mongoose.disconnect();
-                });
+                });*/
+                runTest();
               });
             });
           });
@@ -94,17 +94,44 @@ function addDependencies(script, dependencies){
     addDependencies(dependency,dependencies);
   }
 }
+*/
+function evaluateDependencies(script,callback){
+  var dependencies = [];// Array of Scripts
+  
+  var queue = [];
+  script.dependencies.forEach(function(dependency){
+    queue.push(dependency);
+  });
+  (function iterate(){
+    if(queue.length === 0)
+      callback(dependencies.reverse());
+    else{
+      var dependencyId = queue.splice(0,1)[0];
+      console.log("id = "+dependencyId)
+      Script.findOne({_id:dependencyId},function(err, script){
+        console.log(" "+script.name+script.version);
+        iterate();
+      });
+    }
+  })();
+  
+  
 
-function evaluateDependencies(script){
-  var dependencies = [];
-  addDependencies(script,dependencies);
-  return dependencies.reverse();
+  
+  //addDependencies(script,dependencies);
+  //return dependencies.reverse();
+}
+function runTest(){
+  Script.findOne({name:'c',version:0.1},function(err, script){
+    console.log(script.name+script.version+' depends:');
+    evaluateDependencies(script,function(dependencies){
+      for(var i in dependencies){
+        var d = dependencies[i];
+        console.log(' '+d.name+d.version);
+      }
+      mongoose.disconnect();
+    });
+  });
 }
 
-var script = scripts[3];
-console.log(script.name+script.version+' depends:');
-var dependencies = evaluateDependencies(script);
-for(var i in dependencies){
-  var d = dependencies[i];
-  console.log(' '+d.name+d.version);
-}*/
+
