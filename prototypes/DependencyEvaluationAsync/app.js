@@ -27,11 +27,13 @@ var scripts =
   ]
 }];
 
-function getScript(scriptInfo){
+function getScript(scriptInfo, callback){
   for(i in scripts){
     var script = scripts[i];
-    if(script.name == scriptInfo.name && script.version == scriptInfo.version)
-      return script;
+    if(script.name == scriptInfo.name && script.version == scriptInfo.version){
+      callback(script);
+      return;
+    }
   }
 }
 
@@ -56,9 +58,8 @@ function addDependencies(script, dependencies, callback){
     if(queue.length === 0)
       callback();
     else{
-      var dependency = getScript(queue.splice(0,1)[0]);
-      addDependencies(dependency,dependencies,function(){
-        setTimeout(iterate,0);// to break from the stack
+      getScript(queue.splice(0,1)[0], function(script){
+        addDependencies(script,dependencies,iterate);
       });
     }
   })();
