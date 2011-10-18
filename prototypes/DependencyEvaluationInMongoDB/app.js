@@ -1,5 +1,5 @@
 // TODO have the script content backed by Git
-// Curran 10/14/2011
+// Curran 10/17/2011
 
 var mongoose = require('mongoose'),
     Schema   = mongoose.Schema;
@@ -57,12 +57,6 @@ Script.remove({},function(){
               script.save(function(err){
                 if(err){ console.log( err ); }
                 console.log('saved '+script.name+script.version);
-                /*
-                Script.find({},function(err, scripts){
-                  scripts.forEach(function(script){
-                    console.log(script);
-                  });
-                });*/
                 runTest();
               });
             });
@@ -73,54 +67,74 @@ Script.remove({},function(){
   });
 });
 
-/*
-// Evaluating dependencies of c0.1 should result in [a0.2,b0.1,c0.1]
-function addDependencies(script, dependencies){
+function addScriptToDependencies(script, dependencies, callback){
   var scriptAlreadyInDependencies = false;
   // if the script is already in the list but using an older version,
   for(var i in dependencies){
     var dependency = dependencies[i];
     if(dependency.name == script.name){
       scriptAlreadyInDependencies = true;
-      // use the latest version of the script
+      // use the latest version of the script instead
       if(dependency.version < script.version)
         dependencies[i] = script;
     }
   }
+  
+  // otherwise just add the script to the end of the list
   if(!scriptAlreadyInDependencies)
     dependencies.push(script);
-  for(var i in script.dependencies){
-    var dependency = getScript(script.dependencies[i]);
-    addDependencies(dependency,dependencies);
-  }
-}
-*/
-function evaluateDependencies(script,callback){
-  var dependencies = [];// Array of Scripts
   
+  callback();
+}
+
+function addDependenciesOfScript(script, dependencies, callback){
+  if(script.dependencies.length != 0){
+    var left = script.dependencies.length;
+    // this approach parallelizes IO for each dependency of a script,
+    // which works because the order of dependencies of a given script 
+    // doesn't matter, and this code ensures that all dependencies are
+    // in the dependency list before the scripts that depend on them.
+    script.dependencies.forEach(function(dependencyId){
+      Script.findOne({_id:dependencyId},function(err, dependency){
+        // add this script's dependencies to the dependency list,
+        addDependenciesOfScript(dependency,dependencies,function(){
+          if(--left === 0)
+            // then add this script itself to the dependency list
+            // and call the callback
+            addScriptToDependencies(script,dependencies,callback);
+        });
+      });
+    });
+  }
+  else
+    addScriptToDependencies(script,dependencies,callback);
+  
+    /*
+    // this is a serial approach, which works, but the parallel approach is more efficient.
+    
   var queue = [];
   script.dependencies.forEach(function(dependency){
     queue.push(dependency);
   });
   (function iterate(){
     if(queue.length === 0)
-      callback(dependencies.reverse());
+      addScriptToDependencies(script,dependencies,callback);
     else{
       var dependencyId = queue.splice(0,1)[0];
-      console.log("id = "+dependencyId)
       Script.findOne({_id:dependencyId},function(err, script){
-        console.log(" "+script.name+script.version);
-        iterate();
+        addDependenciesOfScript(script,dependencies,iterate);
       });
     }
-  })();
-  
-  
-
-  
-  //addDependencies(script,dependencies);
-  //return dependencies.reverse();
+  })();*/
 }
+
+function evaluateDependencies(script,callback){
+  var dependencies = [];
+  addDependenciesOfScript(script,dependencies,function(){
+    callback(dependencies);
+  });
+}
+// Evaluating dependencies of c0.1 should result in [a0.2,b0.1,c0.1]
 function runTest(){
   Script.findOne({name:'c',version:0.1},function(err, script){
     console.log(script.name+script.version+' depends:');
