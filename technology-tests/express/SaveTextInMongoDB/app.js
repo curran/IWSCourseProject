@@ -25,13 +25,16 @@ app.configure('scription',function(){
 app.set('view engine','jade');
 app.set('views',__dirname + '/views');
 
-app.get('/', function(req, res){
-  res.render('root', {locals: {
-    scripts: scripts.all
-  }});
-});
-
 var scripts = require('./scripts');
+
+app.get('/', function(req, res){
+  scripts.all(function(err, allScripts){
+    if(err) throw err;
+    res.render('root', {locals: {
+      scripts: allScripts
+    }});
+  });
+});
 
 app.get('/scripts/new', function(req, res){
   res.render('scripts/new');
@@ -39,21 +42,27 @@ app.get('/scripts/new', function(req, res){
 
 app.post('/scripts', function(req, res){
   var name = req.body.script.name;
-  scripts.insertNew(name);
-  res.redirect('/scripts/' + name);
+  scripts.insertNew(name, function(err){
+    if(err) throw err;
+    res.redirect('/scripts/' + name);
+  });
 });
 
 app.get('/scripts/:name', function(req, res) {
-  var script = scripts.find(req.params.name);
-  res.render('scripts/edit', {locals: {
-    script: script
-  }});
+  scripts.find(req.params.name,function(err, script){
+    if(err) throw err;
+    res.render('scripts/edit', {locals: {
+      script: script
+    }});
+  });
 });
 
 app.put('/scripts/:name', function(req, res){
   var name = req.params.name;
-  scripts.setContent(name, req.body.script.content);
-  res.redirect('/scripts/'+name);
+  scripts.setContent(name, req.body.script.content,function(err){
+    if(err) throw err;
+    res.redirect('/scripts/'+name);
+  });
 });
 
 app.listen(4000);

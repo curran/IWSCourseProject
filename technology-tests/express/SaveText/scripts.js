@@ -1,45 +1,38 @@
-var products = [
+
+var scripts = [
 {
-  id: 1,
-  name: 'Mac Book Pro',
+  name: 'A',
   content: 'Apple 13 inch macbook'
 },
 {
-  id: 2,
-  name: 'iPad',
+  name: 'B',
   content: 'Apple iPad'
 },
 {
-  id: 3,
-  name: 'iPhone',
+  name: 'C',
   content: 'Apple iPhone'
 }
 ];
 
-module.exports.all = products;
+module.exports.all = scripts;
 
-module.exports.find = function(id){
-  id = parseInt(id, 10);
-  for(i in products)
-    if(products[i].id == id)
-      return products[i];
+module.exports.find = function(name){
+  for(i in scripts)
+    if(scripts[i].name == name)
+      return scripts[i];
 };
 
-module.exports.new = function() {
-  return {
-    name:'',
+module.exports.insertNew = function(name) {
+  scripts.push({
+    name:name,
     content:''
-  };
+  });
 }
 
-module.exports.insert = function(product) {
-  var id = products.length;
-  product.id = id;
-  products[id - 1] = product;
-  return id;
-}
-
-module.exports.setContent = function(id, content) {
-  id = parseInt(id, 10);
-  products[id - 1].content = content;
+module.exports.setContent = function(name, content) {
+  for(i in scripts)
+    if(scripts[i].name == name){
+      scripts[i].content = content;
+      break;
+    }
 };
