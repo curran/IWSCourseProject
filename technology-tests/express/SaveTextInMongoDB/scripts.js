@@ -71,9 +71,5 @@ module.exports.insertNew = function(name, callback) {
 // sets the content of the script with the given name to the given value
 // callback(error)
 module.exports.setContent = function(name, content, callback) {
-  var conditions = { name: name }
-  , update = { content:content }
-  , options = {};
-
-  Script.update(conditions, update, options, callback)
+  Script.update({ name: name }, { content:content }, {}, callback)
 };
