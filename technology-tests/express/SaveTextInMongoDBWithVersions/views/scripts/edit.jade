@@ -1,0 +1,10 @@
+h1 #{revision.name}
+form(action='/scripts/'+revision.name, method='POST')
+  input(type='hidden', name='_method', value='PUT')
+  p
+    textArea(type='text', id='revision_content', name='revision[content]')= revision.content
+  p
+    input(type='submit', value='Save')
+  p
+    a(href='/scripts/'+revision.name+'/versions') See all versions
+    
