@@ -5,7 +5,8 @@ var mongoose = require('mongoose'),
 var Revisions = new Schema({
   name: String,
   version: Number,
-  content: String
+  message: {type: String, default:''},
+  content: {type: String, default:''}
 });
 
 var Scripts = new Schema({
@@ -144,7 +145,6 @@ module.exports.insertNew = function(name, callback) {
     var revision = new Revision();
     revision.name = name;
     revision.version = firstVersion;
-    revision.content = '';
     revision.save(function(err){
       callback(err,firstVersion);
     });
@@ -153,7 +153,7 @@ module.exports.insertNew = function(name, callback) {
 
 // sets the content of the script with the given name to the given value
 // callback(error, version)
-module.exports.setContent = function(name, content, callback) {
+module.exports.setContent = function(name, content, message, callback) {
   Script.findOne({ name: name }, function(err, script){
     script.latestVersion = Math.round(script.latestVersion*100+1)/100.0;
     // script.latestVersion + 0.01 leads to stuff like 0.10999999999999999
@@ -163,6 +163,7 @@ module.exports.setContent = function(name, content, callback) {
       revision.name = name;
       revision.version = script.latestVersion;
       revision.content = content;
+      revision.message = message;
       revision.save(function(err){
         callback(err,revision.version);
       });

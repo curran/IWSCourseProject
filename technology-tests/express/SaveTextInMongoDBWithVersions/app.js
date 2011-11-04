@@ -16,8 +16,8 @@ app.configure('development',function(){
   }));
 });
 
-// NODE_ENV=scription node app.js
-app.configure('scription',function(){
+// NODE_ENV=production node app.js
+app.configure('production',function(){
   app.use(express.logger());
   app.use(express.errorHandler());
 });
@@ -70,7 +70,10 @@ app.get('/scripts/:name/:version', function(req, res) {
 
 app.put('/scripts/:name', function(req, res){
   var name = req.params.name;
-  scripts.setContent(name, req.body.revision.content,function(err, version){
+  var content = req.body.revision.content;
+  var message = req.body.revision.message;
+  
+  scripts.setContent(name, content, message ,function(err, version){
     if(err) throw err;
     res.redirect('/scripts/'+name+'/'+version);
   });
