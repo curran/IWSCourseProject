@@ -1,22 +1,16 @@
 var spawn = require('child_process').spawn;
 var fs = require('fs');
-
+var CONTENT_FILE_NAME = 'content.txt';
 function dirFromName(name){ return './repos/'+name; }
 
+// executes a series of command line commands serially, callback()
 function executeCommands(dir, queue, callback){
   (function iterate(){
     if(queue.length === 0)
       callback();
     else{
       var task = queue.splice(0,1)[0];
-      var child = spawn(task.command,task.args,{ 
-        cwd: dir, env: process.env, 
-        customFds: [-1, -1, -1]});
-      
-      child.on('exit', function(code){
-        console.log('done');
-        iterate();
-      });
+      spawn(task.command,task.args,{cwd:dir}).on('exit', iterate);
     }
   })();
 }
@@ -25,19 +19,38 @@ function executeCommands(dir, queue, callback){
 // containing a single file called content.txt
 // callback(err)
 module.exports.createRepo = function(name,callback){
-  executeCommands(dirFromName(name),[
-    {command:'touch', args:['content.txt']},
-    {command:'git', args:['init']},
-    {command:'git', args:['add','*']},
-    {command:'git', args:['commit','-m','Initial Creation']},
-  ], callback);
+  var dir = dirFromName(name);
+  fs.mkdir(dir, 0755, function(err){
+    if(err) callback(err);
+    else executeCommands(dir,[
+      {command:'git', args:['init']},
+      {command:'touch', args:[CONTENT_FILE_NAME]},
+      {command:'git', args:['add','*']},
+      {command:'git', args:['commit','-m','Initial Creation']}
+    ], callback);
+  });
 }
 
 // tags a the given git repository name with the given version
 // callback(err)
 module.exports.tagRepo = function(name, version, callback){
   executeCommands(dirFromName(name),[
-    {command:'git', args:['commit','-m','made change']},
-    {command:'git', args:['tag','-a',version,'-m','new version']}
+    {command:'git', args:['commit','-m','x','-a']},
+    {command:'git', args:['tag','-a','v'+version,'-m','x']}
   ], callback);
 }
+
+// sets the content of the given repo to the given text content
+// then calls callback(err)
+module.exports.setContent = function(name, content, callback){
+  fs.writeFile(dirFromName(name)+'/'+CONTENT_FILE_NAME, content, callback);
+}
+
+// callback(err,content)
+module.exports.getContent = function(name, version, callback){
+  var child = spawn('git',['show', 'v'+version+':'+CONTENT_FILE_NAME],
+    { cwd: dirFromName(name) });
+  var content = '';
+  child.stdout.on('data',function(data){ content += data.toString(); });
+  child.on('exit', function(code){ callback(null,content); });
+};

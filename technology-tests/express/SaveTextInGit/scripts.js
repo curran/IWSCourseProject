@@ -1,12 +1,11 @@
-
 var mongoose = require('mongoose'),
-    Schema   = mongoose.Schema;
+    Schema   = mongoose.Schema,
+    git      = require('./git');
 
 var Revisions = new Schema({
   name: String,
   version: Number,
-  message: {type: String, default:''},
-  content: {type: String, default:''}
+  message: {type: String, default:''}
 });
 
 var Scripts = new Schema({
@@ -21,8 +20,6 @@ mongoose.model('Revision',Revisions);
 var Script = mongoose.model('Script');
 var Revision = mongoose.model('Revision');
 
-var git = require('./git');
-
 // Clear the DB for testing
 module.exports.clearDB = function(callback){
   Revision.remove({},function(){
@@ -30,34 +27,27 @@ module.exports.clearDB = function(callback){
   });
 }
 
+// Finds all scripts, callback(err, allScripts)
 module.exports.all = function(callback){
   Script.find({},callback);
-};
-
-// finds the script with the given name.
-// callback(error, script)
-module.exports.findRevision = function(name, version, callback){
-  Revision.findOne({name:name, version: version},callback);
 };
 
 // inserts a new script with the given name and blank content.
 // callback(error, version)
 module.exports.insertNew = function(name, callback) {
   var firstVersion = 0.00;
-  var script = new Script();
-  script.name = name;
-  script.latestVersion = firstVersion;
+  var script = new Script(), revision = new Revision();
+  script.name = revision.name = name;
+  script.latestVersion = revision.version = firstVersion;
   script.save(function(err){
-    var revision = new Revision();
-    revision.name = name;
-    revision.version = firstVersion;
-    revision.save(function(err){
-      git.createRepo(name,function(err){
-        if(err) throw err;
-        git.tagRepo(name, firstVersion, function(err){
-          console.log('repo tagged');
+    if(err) callback(err);
+    else revision.save(function(err){
+      if(err) callback(err);
+      else git.createRepo(name,function(err){
+        if(err) callback(err);
+        else git.tagRepo(name, firstVersion, function(err){
           callback(err,firstVersion);
-        })
+        });
       });
     });
   });
@@ -69,19 +59,28 @@ module.exports.setContent = function(name, content, message, callback) {
   Script.findOne({ name: name }, function(err, script){
     script.latestVersion = Math.round(script.latestVersion*100+1)/100.0;
     // script.latestVersion + 0.01 leads to stuff like 0.10999999999999999
-    
-    script.save(function(err){
+    if(err) callback(err);
+    else script.save(function(err){
       var revision = new Revision();
       revision.name = name;
       revision.version = script.latestVersion;
-      revision.content = content;
       revision.message = message;
       revision.save(function(err){
-        callback(err,revision.version);
+        if(err) callback(err);
+        else git.setContent(name, content, function(err){
+          if(err) callback(err);
+          else git.tagRepo(name, revision.version, function(err){
+            callback(err,revision.version);
+          });
+        });
       });
     });
   });
 };
+
+// gets the content of the script with the given name and version.
+// getContent(name, version, callback(err, content))
+module.exports.getContent = git.getContent;
 
 module.exports.findAllRevisions = function(name, callback){
   Revision.find({ name: name }, callback);

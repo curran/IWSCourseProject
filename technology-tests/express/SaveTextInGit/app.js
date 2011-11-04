@@ -59,11 +59,12 @@ app.get('/scripts/:name/versions', function(req, res) {
 });
 
 app.get('/scripts/:name/:version', function(req, res) {
-  scripts.findRevision(req.params.name, req.params.version, function(err, revision){
+  var name = req.params.name, version = req.params.version;
+  scripts.getContent(name, version, function(err, content){
     if(err) throw err;
-    res.render('scripts/edit', {locals: {
-      revision: revision
-    }});
+    res.render('scripts/edit', {locals: { revision: {
+      name:name, version: version, content: content
+    }}});
   });
 });
 
