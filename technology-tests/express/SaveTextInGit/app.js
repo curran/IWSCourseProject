@@ -1,4 +1,5 @@
-var express = require('express');
+var express = require('express'),
+    scripts = require('./modules/scripts');;
 
 var app = express.createServer();
 
@@ -24,8 +25,6 @@ app.configure('production',function(){
 
 app.set('view engine','jade');
 app.set('views',__dirname + '/views');
-
-var scripts = require('./scripts');
 
 app.get('/', function(req, res){
   scripts.all(function(err, allScripts){
