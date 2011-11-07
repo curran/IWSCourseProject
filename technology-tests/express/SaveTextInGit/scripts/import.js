@@ -11,9 +11,7 @@ if(!arguments[0])
   console.log("An argument is expected which specifies the input JSON text file.");
 else{
   var inputFileName = arguments[0];
-  var inFileStream = fs.createReadStream(inputFileName, {
-    'bufferSize': 1
-  });
+  var inFileStream = fs.createReadStream(inputFileName, { 'bufferSize': 1  });
   inFileStream.on('close', function () {
     console.log('done reading file');
     scripts.disconnect();
