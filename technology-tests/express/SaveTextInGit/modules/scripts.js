@@ -20,6 +20,10 @@ mongoose.model('Revision',Revisions);
 var Script = mongoose.model('Script');
 var Revision = mongoose.model('Revision');
 
+var firstVersion = 0;
+
+module.exports.FIRST_VERSION = firstVersion;
+
 // Clear the DB for testing
 module.exports.clearDB = function(callback){
   Revision.remove({},function(){
@@ -35,7 +39,6 @@ module.exports.all = function(callback){
 // inserts a new script with the given name and blank content.
 // callback(error, version)
 module.exports.insertNew = function(name, callback) {
-  var firstVersion = 0.00;
   var script = new Script(), revision = new Revision();
   script.name = revision.name = name;
   script.latestVersion = revision.version = firstVersion;
@@ -77,6 +80,7 @@ module.exports.setContent = function(name, content, message, callback) {
     });
   });
 };
+
 
 // gets the content of the script with the given name and version.
 // getContent(name, version, callback(err, content))

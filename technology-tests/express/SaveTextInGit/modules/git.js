@@ -1,5 +1,5 @@
-var spawn = require('child_process').spawn;
-var fs = require('fs');
+var spawn = require('child_process').spawn,
+    fs = require('fs');
 var CONTENT_FILE_NAME = 'content.txt';
 var prefix = '.';
 function dirFromName(name){ return prefix+'/repos/'+name; }
@@ -49,7 +49,6 @@ module.exports.setContent = function(name, content, callback){
 
 // callback(err,content)
 module.exports.getContent = function(name, version, callback){
-  console.log('name: '+name+', version: '+version);
   var child = spawn('git',['show', 'v'+version+':'+CONTENT_FILE_NAME],
     { cwd: dirFromName(name) });
   var content = '';
