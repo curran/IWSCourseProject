@@ -16,7 +16,7 @@
 var CIRCLE = "Circle";
 
 // default coordinates and colors for new circles
-var defaults = { 'x' : 5, 'y' : 10, 'r' : 0, 'g' : 0, 'b' : 0 }
+var defaults = { 'x' : 5, 'y' : 10, 'r' : 0, 'g' : 0, 'b' : 0 , 'text':'text'}
 
 // circle size
 var circleDiameter = 30;
@@ -45,7 +45,7 @@ ASH.registerPlugin({
     return {
       //the function that sets a value on a 'circle'
       set:function(property,value){
-        //assuming 'property' in {x,y,r,g,b}
+        //assuming 'property' in {x,y,r,g,b,text}
         circles[resourceId][property] = value;
         graphicsDirty = true;
       },
@@ -72,6 +72,8 @@ function sketch(p){
   var circleBeingMoved = undefined;
   
   function getCircleUnderPoint(x,y){
+    // get the text bounding box using this example
+    // http://processingjs.org/source/text-width/text-width.html
     for(i in circles){
       var circle = circles[i];
       var dist2 = Math.pow(circle.x - x,2)+Math.pow(circle.y - y,2);
@@ -150,6 +152,8 @@ function sketch(p){
         
         var size = dataToScreenSpace(circleDiameter);
         p.ellipse(x, y, size, size);
+        p.fill(0);
+        p.text(circle.text,x,y);
       }
       graphicsDirty = false;
     }
@@ -171,7 +175,7 @@ function sketch(p){
         ASH.set(resourceId,'r',random255());
         ASH.set(resourceId,'g',random255());
         ASH.set(resourceId,'b',random255());
-        //ASH.set(resourceId,'text',prompt("Please enter your text",""));
+        ASH.set(resourceId,'text',prompt("Please enter your text",""));
         ASH.commit();
         graphicsDirty = true;
       });
