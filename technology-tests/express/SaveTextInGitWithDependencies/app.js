@@ -65,9 +65,17 @@ app.get('/scripts/:name/:version', function(req, res) {
   var name = req.params.name, version = req.params.version;
   scripts.getContent(name, version, function(err, content){
     if(err) throw err;
-    res.render('scripts/edit', {locals: { revision: {
-      name:name, version: version, content: content
-    }}});
+    scripts.getDependencies(name, version, function(err, dependencies){
+      if(err) throw err;
+      if(!dependencies)
+        console.log('dependencies = null');
+      else
+        console.log('dependencies.length = '+dependencies.length);
+        
+      res.render('scripts/edit', {locals: { revision: {
+        name:name, version: version, content: content, dependencies:dependencies
+      }}});
+    });
   });
 });
 

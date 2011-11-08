@@ -19,7 +19,7 @@ var Scripts = new Schema({
   latestVersion: Number
 });
 
-mongoose.connect('mongodb://localhost/mydatabase');
+var connectResult = mongoose.connect('mongodb://localhost/mydatabase');
 mongoose.model('Script',Scripts);
 mongoose.model('Revision',Revisions);
 
@@ -95,14 +95,25 @@ module.exports.setContent = function(name, content, message, callback) {
         });
         console.log('saved dependency: '+name+version);
       });
+      console.log('Here 1');
       revision.save(function(err){
+        console.log('Here 2');
         if(err) callback(err);
-        else git.setContent(name, content, function(err){
-          if(err) callback(err);
-          else git.tagRepo(name, revision.version, function(err){
-            callback(err,revision.version);
+        else{
+          console.log('Here 3');
+          /*Revision.findOne({ name: name, version:version }, function(err,revision){
+            console.log('dependencies in DB: '+revision.dependencies);
+          });*/
+          console.log('Here 4');
+          git.setContent(name, content, function(err){
+            console.log('Here 5');
+            if(err) callback(err);
+            else git.tagRepo(name, revision.version, function(err){
+              console.log('Here 6');
+              callback(err,revision.version);
+            });
           });
-        });
+        }
       });
     });
   });
@@ -112,6 +123,14 @@ module.exports.setContent = function(name, content, message, callback) {
 // gets the content of the script with the given name and version.
 // getContent(name, version, callback(err, content))
 module.exports.getContent = git.getContent;
+
+// gets the dependencies for the given revision pointer
+// callback(err, dependencies)
+module.exports.getDependencies = function(name, version, callback){
+  Revision.findOne({ name: name, version:version }, function(err,revision){
+    callback(err, revision.dependencies);
+  });
+};
 
 // finds all revisions of the given script.
 // callback(err, revisions)
