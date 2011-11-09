@@ -4,7 +4,8 @@ h6 v#{revision.version}
    h6 dependencies:
    ul
    each dependency in revision.dependencies
-     li #{dependency.name+' v'+dependency.version}
+     li 
+       a(href='/scripts/'+dependency.name+'/'+dependency.version) #{dependency.name+' v'+dependency.version}
 form(action='/scripts/'+revision.name, method='POST')
   input(type='hidden', name='_method', value='PUT')
   p

@@ -146,3 +146,67 @@ module.exports.disconnect = function(){
 // stays the default when running app.js
 // must be changed when node working dir is different (e.g. in export.js)
 module.exports.setDirectoryPrefix = git.setDirectoryPrefix;
+
+
+function addScriptToDependencies(script, dependencies, callback){
+  var scriptAlreadyInDependencies = false;
+  // if the script is already in the list but using an older version,
+  for(var i in dependencies){
+    var dependency = dependencies[i];
+    if(dependency.name == script.name){
+      scriptAlreadyInDependencies = true;
+      // use the latest version of the script instead
+      if(dependency.version < script.version)
+        dependencies[i] = script;
+    }
+  }
+  
+  // otherwise just add the script to the end of the list
+  if(!scriptAlreadyInDependencies)
+    dependencies.push(script);
+  
+  callback();
+}
+
+function addDependenciesOfScript(script, dependencies, callback){
+  if(script.dependencies.length != 0){
+    var left = script.dependencies.length;
+    // this approach parallelizes IO for each dependency of a script,
+    // which works because the order of dependencies of a given script 
+    // doesn't matter, and this code ensures that all dependencies are
+    // in the dependency list before the scripts that depend on them.
+    script.dependencies.forEach(function(dependency){
+      Revision.findOne({
+        name: dependency.name,
+        version: dependency.version
+      },function(err, dependency){
+        // add this script's dependencies to the dependency list,
+        addDependenciesOfScript(dependency,dependencies,function(){
+          if(--left === 0)
+            // then add this script itself to the dependency list
+            // and call the callback
+            addScriptToDependencies(script,dependencies,callback);
+        });
+      });
+    });
+  }
+  else
+    addScriptToDependencies(script,dependencies,callback);
+}
+// Evaluates the dependencies of the given revision.
+// The 'revision' argument should have the following properties:
+//  name, version, dependencies
+// If two versions of the same script are required, only the most
+// recent version is included.
+// callback(dependencies) where dependencies is a list of revision pointers.
+module.exports.evaluateDependencies = function (name,version,callback){
+  Revision.findOne({ name: name, version:version }, function(err,revision){
+    console.log('found revision');
+    var dependencies = [];
+    addDependenciesOfScript(revision,dependencies,function(){
+      callback(dependencies);
+    });
+    /*dependencies.push({ name: name, version:version });
+    callback(dependencies);*/
+  });
+}

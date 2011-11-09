@@ -79,6 +79,42 @@ app.get('/scripts/:name/:version', function(req, res) {
   });
 });
 
+app.get('/scripts/:name/:version/get', function(req, res) {
+  var name = req.params.name, version = req.params.version;
+  scripts.evaluateDependencies(name,version,function(dependencies){
+    res.write('depends: ');
+    for(var i in dependencies){
+      var d = dependencies[i];
+      res.write(' '+d.name+d.version);
+      
+    }
+    res.write('\n\n');
+    
+    // TODO handle errors
+    (function iterate(){
+      if(dependencies.length === 0)
+        res.end();
+      else{
+        var dependency = dependencies.splice(0,1)[0];
+        scripts.getContent(dependency.name, dependency.version, function(err, content){
+          if(err) throw err;
+          var lines = content.split('\n');
+          for(var i = 0; i < lines.length; i++){
+            var line = lines[i];
+            if(line.indexOf('@depends') === -1)
+              res.write(line + '\n');
+          }
+          iterate();
+        });
+      }
+    })();
+    
+  });
+  /*scripts.getContent(name, version, function(err, content){
+    res.write(content);
+    res.end();
+  });*/
+});
 
 app.put('/scripts/:name', function(req, res){
   var name = req.params.name;
