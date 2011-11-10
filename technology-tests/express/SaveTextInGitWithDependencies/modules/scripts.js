@@ -11,6 +11,10 @@ var Revisions = new Schema({
   name: String,
   version: Number,
   dependencies: [RevisionPointers],
+  template: {
+    name: String,
+    version: Number
+  },
   message: {type: String, default:''}
 });
 
@@ -63,16 +67,24 @@ module.exports.insertNew = function(name, callback) {
 }
 
 // Parses the dependencies out of the given script content.
-// callback(name, version) is called for each dependency.
-function parseDependencies(content, callback){
+// callbacks.dependsOn(name, version) is called for each '@depends' occurance.
+// callbacks.embedIn(name, version) is called for each '@embed in' occurance.
+
+function parseContent(content, callbacks){
   var lines = content.split('\n');
   for(var i = 0; i < lines.length; i++){
     var line = lines[i];
-    if(line.indexOf('@depends') != -1){
+    var dependsOn = line.indexOf('@depends') != -1;
+    var embedIn = line.indexOf('@embed') != -1;
+    
+    if(dependsOn || embedIn){
       var tokens = line.split(' ');
-      var name = tokens[1];
-      var version = tokens[2];
-      callback(name, version);
+      var name = tokens[2];
+      var version = tokens[3];
+      if(dependsOn)
+        callbacks.dependsOn(name, version);
+      else if(embedIn)
+        callbacks.embedIn(name, version);
     }
   }
 }
@@ -89,11 +101,19 @@ module.exports.setContent = function(name, content, message, callback) {
       revision.name = name;
       revision.version = script.latestVersion;
       revision.message = message;
-      parseDependencies(content, function(name, version){
-        revision.dependencies.push({
-          name: name, version: version
-        });
-        console.log('saved dependency: '+name+version);
+      parseContent(content, {
+        dependsOn: function(name, version){
+          revision.dependencies.push({
+            name: name, version: version
+          });
+          console.log('saved dependency: '+name+version);
+        },
+        embedIn: function(name, version){
+          revision.template = {
+            name: name, version: version
+          };
+          console.log('saved template: '+name+version);
+        }
       });
       console.log('Here 1');
       revision.save(function(err){
@@ -193,20 +213,25 @@ function addDependenciesOfScript(script, dependencies, callback){
   else
     addScriptToDependencies(script,dependencies,callback);
 }
-// Evaluates the dependencies of the given revision.
-// The 'revision' argument should have the following properties:
-//  name, version, dependencies
+
+// Evaluates the dependencies of the given revision (specified by name and version).
 // If two versions of the same script are required, only the most
 // recent version is included.
 // callback(dependencies) where dependencies is a list of revision pointers.
 module.exports.evaluateDependencies = function (name,version,callback){
   Revision.findOne({ name: name, version:version }, function(err,revision){
-    console.log('found revision');
     var dependencies = [];
     addDependenciesOfScript(revision,dependencies,function(){
       callback(dependencies);
     });
-    /*dependencies.push({ name: name, version:version });
-    callback(dependencies);*/
   });
 }
+
+// Finds and returns the given revision (only metadata, no content)
+// revisionPointer = {name: ... , version: ...}
+// callback(err, revision)
+module.exports.findRevision = function(revisionPointer, callback){
+  Revision.findOne({
+    name: revisionPointer.name, version: revisionPointer.version
+  }, callback);
+};

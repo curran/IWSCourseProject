@@ -79,41 +79,60 @@ app.get('/scripts/:name/:version', function(req, res) {
   });
 });
 
-app.get('/scripts/:name/:version/get', function(req, res) {
+app.get('/scripts/:name/:version/run', function(req, res) {
   var name = req.params.name, version = req.params.version;
-  scripts.evaluateDependencies(name,version,function(dependencies){
-    res.write('depends: ');
-    for(var i in dependencies){
-      var d = dependencies[i];
-      res.write(' '+d.name+d.version);
-      
-    }
-    res.write('\n\n');
+  
+  scripts.findRevision(req.params, function(err, revision){
+    console.log('revision found: '+revision.name+', template = '+revision.template.name);
     
-    // TODO handle errors
-    (function iterate(){
-      if(dependencies.length === 0)
-        res.end();
-      else{
-        var dependency = dependencies.splice(0,1)[0];
-        scripts.getContent(dependency.name, dependency.version, function(err, content){
-          if(err) throw err;
-          var lines = content.split('\n');
-          for(var i = 0; i < lines.length; i++){
-            var line = lines[i];
-            if(line.indexOf('@depends') === -1)
-              res.write(line + '\n');
-          }
-          iterate();
+    function getTemplatePieces(callback){
+      if(revision.template)
+        scripts.getContent(revision.template.name,
+                           revision.template.version,
+                           function(err, content){
+          var pieces = content.split('${code}');
+          callback(true,pieces[0], pieces[1]);
         });
-      }
-    })();
+      else
+        callback(false,null,null);
+    }
     
+    getTemplatePieces(function(hasTemplate, firstHalf, secondHalf){
+      scripts.evaluateDependencies(name,version,function(dependencies){
+        if(hasTemplate)
+          res.write(firstHalf);
+        res.write('// scripts included: ');
+        for(var i in dependencies){
+          var d = dependencies[i];
+          res.write(' '+d.name+' v'+d.version);
+        }
+        res.write('\n\n');
+        
+        // TODO handle errors
+        (function iterate(){
+          if(dependencies.length === 0){
+            if(hasTemplate)
+              res.write(secondHalf);
+            res.end();
+          }
+          else{
+            var d = dependencies.splice(0,1)[0];
+            scripts.getContent(d.name, d.version, function(err, content){
+              if(err) throw err;
+              var lines = content.split('\n');
+              for(var i = 0; i < lines.length; i++){
+                var line = lines[i];
+                if(line.indexOf('@depends') === -1 &&
+                   line.indexOf('@embed') === -1)
+                  res.write(line + '\n');
+              }
+              iterate();
+            });
+          }
+        })();
+      });
+    });
   });
-  /*scripts.getContent(name, version, function(err, content){
-    res.write(content);
-    res.end();
-  });*/
 });
 
 app.put('/scripts/:name', function(req, res){
