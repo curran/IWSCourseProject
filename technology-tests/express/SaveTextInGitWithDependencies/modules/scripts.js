@@ -140,9 +140,12 @@ module.exports.setContent = function(name, content, message, callback) {
 };
 
 
-// gets the content of the script with the given name and version.
-// getContent(name, version, callback(err, content))
-module.exports.getContent = git.getContent;
+// gets the content of the given revision
+// revisionPointer = {name: ... , version: ...}
+// callback(err, content)
+module.exports.getContent = function(revisionPointer, callback){
+  git.getContent(revisionPointer.name, revisionPointer.version, callback);
+};
 
 // gets the dependencies for the given revision pointer
 // callback(err, dependencies)

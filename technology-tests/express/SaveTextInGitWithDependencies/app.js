@@ -63,7 +63,7 @@ app.get('/scripts/:name/versions', function(req, res) {
 
 app.get('/scripts/:name/:version', function(req, res) {
   var name = req.params.name, version = req.params.version;
-  scripts.getContent(name, version, function(err, content){
+  scripts.getContent(req.params, function(err, content){
     if(err) throw err;
     scripts.getDependencies(name, version, function(err, dependencies){
       if(err) throw err;
@@ -87,9 +87,7 @@ app.get('/scripts/:name/:version/run', function(req, res) {
     
     function getTemplatePieces(callback){
       if(revision.template)
-        scripts.getContent(revision.template.name,
-                           revision.template.version,
-                           function(err, content){
+        scripts.getContent(revision.template, function(err, content){
           var pieces = content.split('${code}');
           callback(true,pieces[0], pieces[1]);
         });
@@ -106,7 +104,7 @@ app.get('/scripts/:name/:version/run', function(req, res) {
           var d = dependencies[i];
           res.write(' '+d.name+' v'+d.version);
         }
-        res.write('\n\n');
+        res.write('\n');
         
         // TODO handle errors
         (function iterate(){
@@ -117,7 +115,7 @@ app.get('/scripts/:name/:version/run', function(req, res) {
           }
           else{
             var d = dependencies.splice(0,1)[0];
-            scripts.getContent(d.name, d.version, function(err, content){
+            scripts.getContent(d, function(err, content){
               if(err) throw err;
               var lines = content.split('\n');
               for(var i = 0; i < lines.length; i++){

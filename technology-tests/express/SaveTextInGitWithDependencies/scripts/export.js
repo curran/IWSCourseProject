@@ -38,7 +38,7 @@ scripts.all(function(err, allScripts){
             iterateScript();
           else {
             var revision = allRevisions.splice(0,1)[0];
-            scripts.getContent(revision.name, revision.version, function(err, content){
+            scripts.getContent(revision, function(err, content){
               if(revision.version != scripts.FIRST_VERSION)
                 outputStream.write(JSON.stringify({
                   type:'revision',
