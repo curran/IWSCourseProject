@@ -1,4 +1,10 @@
-// Module documentation at the bottom of the file.
+// A module for interacting with a MongoDB 
+// store of Script and Revision entries.
+//
+// API documentation at the bottom of the file.
+//
+// Author: Curran Kelleher
+// Last updated 11/11/2011
 
 var mongoose = require('mongoose'),
     Schema   = mongoose.Schema;
@@ -36,11 +42,11 @@ function clearDB(callback){
 
 function findAllScripts(callback){
   Script.find({},callback);
-};
+}
 
 function findAllRevisions(name, callback){
   Revision.find({ name: name }, callback);
-};
+}
 
 function insertNewScript(name, firstVersion, callback){
   var script = new Script(), revision = new Revision();
@@ -60,6 +66,10 @@ function parseContent(content, callbacks){
   for(var i = 0; i < lines.length; i++){
     var line = lines[i];
     var dependsOn = line.indexOf('@depends') != -1;
+    //TODO handle errors when:
+    // - syntax error (wrong number of tokens)
+    // - @depends or @embed points to nonexistent revisions
+    // - @embed target doesn't contain exactly one '${code}'
     var embedIn = line.indexOf('@embed') != -1;
     
     if(dependsOn || embedIn){
@@ -86,10 +96,14 @@ function saveRevision(revision, callback){
       });
     },
     embedIn: function(name, version){
+      // TODO report error when multiple '@embed in's are found
       revisionInDB.template = {
         name: name, version: version
       };
     }
+    //TODO parse occurances of '${code}'
+    //TODO report error when '${code}' is present with 
+    //     either '@depends on' or '@embed in'
   });
   revisionInDB.save(callback);
 }
@@ -98,6 +112,8 @@ function incrementLatestVersion(name, callback){
   Script.findOne({ name: name }, function(err, script){
     if(err) callback(err);
     else{
+      //TODO use strings to always get nice looking versions
+      // of the form X+.XX
       script.latestVersion = Math.round(script.latestVersion*100+1)/100.0;
       // script.latestVersion + 0.01 leads to stuff like 0.10999999999999999
       script.save(function(err){
@@ -116,51 +132,88 @@ function findRevision(name, version, callback){
   });
 };
 
-// inserts a new script and its first version into
-// the database, with the given name and blank content.
-// callback(error)
+// insertNewScript(name, firstVersion, callback(error))
+//
+// Inserts a new Script entry into the database with
+// the given 'name', then inserts a new Revision entry 
+// into the database has the version number 'firstVersion'.
 module.exports.insertNewScript = insertNewScript;
 
-// Clear the DB for testing
-// callback(error)
-module.exports.clearDB = clearDB;
 
-// Saves the given revision to the database.
-// saveRevision(revision, )
-// revision = { name:,  version:, message:, content:}
-// callback(error)
+// saveRevision(revision, callback(error))
+//
+// Saves the given 'revision' to the database, which is
+// expected to be an object with the following properties:
+//  - name:String - The name of the Script to which this
+//                  revision belongs.
+//  - version:String - The version number of this revision.
+//  - message:String - The commit message for this revision
+//  - content:String - The code content of this revision,
+//                     used only for extracting occurances of
+//                     '@depends on', '@embed in', and '${code}'.
+//                     The content is not stored in the database.
 module.exports.saveRevision = saveRevision;
 
-// Increments the latest version of the script with the given name,
-// and calls the callback with the new latest version number.
 // incrementLatestVersion(name, callback(error, latestVersion))
+//
+// Increments the latest version of the Script database entry
+// with the given 'name' and passes the new latest version number
+// to the callback.
 module.exports.incrementLatestVersion = incrementLatestVersion;
 
-// Disconnects from MongoDB (useful only for import/export scripts)
-module.exports.disconnect = mongoose.disconnect;
-
-// Finds all scripts.
-// findAllScripts(callback(err, allScripts)) where allScripts is an 
-// array of objects which each have the following properties:
-//  - name: String,
-//  - latestVersion: Number
+// findAllScripts(callback(error, allScripts))
+// 
+// Finds all Script entries in the database.
+// The callback argument 'allScripts' is an array
+// of objects which each have the following properties:
+//  - name: String - The name of the script
+//  - latestVersion: String - The latest version of the script
 module.exports.findAllScripts = findAllScripts;
 
-// Finds all revisions of the given script.
-// findAllRevisions(callback(err, allRevisions)) where allRevisions is an 
-// array of objects which each have the following properties:
-//  - name: String
-//  - version: Number
-//  - dependencies: [{name: String, version: Number}]
-//  - template: {name: String, version: Number}
-//  - message: String
+// findAllRevisions(callback(error, allRevisions))
+//
+// Finds all revisions of the given script. The callback
+// argument 'allRevisions' is an array of objects which 
+// each have the following properties:
+//  - name: String - The name of the Script to which 
+//                   this revision belongs.
+//  - version: Number - The version of this revision
+//  - dependencies: [{name: , version: }] 
+//    - The dependencies of this revision, an array of
+//      objects referring to Revisions by name and version.
+//  - template: {name: , version: } - A reference to the script
+//                                    which serves as a template
+//                                    for this revision.
+//  - message: String - The commit message of this revision.
 module.exports.findAllRevisions = findAllRevisions;
 
+// findRevision(name, version, callback(error, revision))
+//
 // Finds the revision with the given name and version.
-// callback(error, revision) where 'revision' has:
-//  - name: String
-//  - version: Number
-//  - dependencies: [{name: String, version: Number}]
-//  - template: {name: String, version: Number}
-//  - message: String
+// The callback argument 'revision' has:
+//  - name: String - The name of the Script to which 
+//                   this revision belongs.
+//  - version: Number - The version of this revision
+//  - dependencies: [{name: , version: }] 
+//    - The dependencies of this revision, an array of
+//      objects referring to Revisions by name and version.
+//  - template: {name: , version: } - A reference to the script
+//                                    which serves as a template
+//                                    for this revision.
+//  - message: String - The commit message of this revision.
 module.exports.findRevision = findRevision;
+
+/******************************************
+ * Methods below intended for use only by *
+ * import, export, and testing scripts.   *
+ ******************************************/
+
+// clearDB(callback(error))
+//
+// Clear the entire database.
+module.exports.clearDB = clearDB;
+
+// disconnect()
+//
+// Disconnects from MongoDB so the Node process can end.
+module.exports.disconnect = mongoose.disconnect;

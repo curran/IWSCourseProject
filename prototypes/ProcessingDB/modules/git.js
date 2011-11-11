@@ -1,10 +1,18 @@
+// A module for interacting with Git.
+//
+// API documentation at the bottom of the file.
+//
+// Author: Curran Kelleher
+// Last updated 11/11/11
+
 var spawn = require('child_process').spawn,
     fs = require('fs');
 var CONTENT_FILE_NAME = 'content.txt';
 var prefix = '.';
 function dirFromName(name){ return prefix+'/repos/'+name; }
 
-// executes a series of command line commands serially, callback()
+// executes a series of command line commands serially.
+// callback()
 function executeCommands(dir, queue, callback){
   (function iterate(){
     if(queue.length === 0)
@@ -16,10 +24,7 @@ function executeCommands(dir, queue, callback){
   })();
 }
 
-// creates a new Git repository with the given name,
-// containing a single file called content.txt
-// callback(err)
-module.exports.createRepo = function(name,callback){
+function createRepo(name,callback){
   var dir = dirFromName(name);
   fs.mkdir(dir, 0755, function(err){
     if(err) callback(err);
@@ -32,23 +37,14 @@ module.exports.createRepo = function(name,callback){
   });
 }
 
-// tags a the given git repository name with the given version
-// callback(err)
-module.exports.tagRepo = function(name, version, callback){
+function tagRepo(name, version, callback){
   executeCommands(dirFromName(name),[
     {command:'git', args:['commit','-m','x','-a']},
     {command:'git', args:['tag','-a','v'+version,'-m','x']}
   ], callback);
 }
 
-// sets the content of the given repo to the given text content
-// then calls callback(err)
-module.exports.setContent = function(name, content, callback){
-  fs.writeFile(dirFromName(name)+'/'+CONTENT_FILE_NAME, content, callback);
-}
-
-// callback(err,content)
-module.exports.getContent = function(name, version, callback){
+function getContent(name, version, callback){
   var child = spawn('git',['show', 'v'+version+':'+CONTENT_FILE_NAME],
     { cwd: dirFromName(name) });
   var content = '';
@@ -58,7 +54,44 @@ module.exports.getContent = function(name, version, callback){
   });
 };
 
-// sets the prefix of the directory path used.
-// stays the default when running app.js
-// must be changed when node working dir is different (e.g. in export.js)
+function setContent(name, content, callback){
+  fs.writeFile(dirFromName(name)+'/'+CONTENT_FILE_NAME, content, callback);
+}
+
+// createRepo(name,callback(error))
+//
+// Creates a new Git repository with the given name,
+// containing a single file called content.txt.
+module.exports.createRepo = createRepo;
+
+// tagRepo(name, version, callback(error))
+//
+// Commits and tags the Git repository with the
+// given 'name' with the given 'version'.
+module.exports.tagRepo = tagRepo;
+
+// setContent(name, content, callback(error))
+//
+// Sets the content of the Git repository with the 
+// given 'name' to the given text 'content'.
+module.exports.setContent = setContent;
+
+// getContent(name, version, callback(error, content))
+// 
+// Retreives the content of the Git repository with the
+// given 'name' for the given 'version'. The callback
+// argument 'content' is a String containing the content
+// of the single file in the Git repository.
+module.exports.getContent = getContent;
+
+/******************************************
+ * Methods below intended for use only by *
+ * import, export, and testing scripts.   *
+ ******************************************/
+
+// setDirectoryPrefix()
+// 
+// Sets the prefix of the directory path used.
+// Needs to be called only when the Node working directory
+// is different from where app.js is (e.g. in scripts/export.js)
 module.exports.setDirectoryPrefix = function(newPrefix){ prefix = newPrefix; };

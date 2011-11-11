@@ -1,3 +1,12 @@
+// A module for interacting with a store of versioned
+// scripts with dependency information. The store is backed
+// by a system using both MongoDB and Git.
+//
+// API documentation at the bottom of the file.
+//
+// Author: Curran Kelleher
+// Last updated 11/11/11
+
 var db  = require('./db'),
     git = require('./git');
 
@@ -47,9 +56,7 @@ function findRevisionWithContent(name, version, callback){
   });
 }
 
-// gets the content of the given revision
-// getContent(name, version, callback(err, content))
-module.exports.getContent = git.getContent;
+
 
 function addScriptToDependencies(script, dependencies, callback){
   var scriptAlreadyInDependencies = false;
@@ -104,62 +111,116 @@ function evaluateDependencies(name,version,callback){
   });
 }
 
+// getContent(name, version, callback(error, content))
+// 
+// Retreives the content of the Git repository with the
+// given 'name' for the given 'version'. The callback
+// argument 'content' is a String containing the content
+// of the single file in the Git repository.
+module.exports.getContent = git.getContent;
+
+// findRevision(name, version, callback(error, revision))
+//
 // Finds the revision with the given name and version.
-// callback(error, revision) where 'revision' has:
-//  - name: String
-//  - version: Number
-//  - dependencies: [{name: String, version: Number}]
-//  - template: {name: String, version: Number}
-//  - message: String
-//  - content: String <- retrieved from the Git repository
+// The callback argument 'revision' has:
+//  - name: String - The name of the Script to which 
+//                   this revision belongs.
+//  - version: Number - The version of this revision
+//  - dependencies: [{name: , version: }] 
+//    - The dependencies of this revision, an array of
+//      objects referring to Revisions by name and version.
+//  - template: {name: , version: } - A reference to the script
+//                                    which serves as a template
+//                                    for this revision.
+//  - message: String - The commit message of this revision.
+module.exports.findRevision = db.findRevision;
+
+// findRevisionWithContent(name, version, callback(error, revision))
+//
+// Finds the revision with the given name and version, and adds to
+// it the content from the Script's Git repository.
+// The callback argument 'revision' has:
+//  - name: String - The name of the Script to which 
+//                   this revision belongs.
+//  - version: Number - The version of this revision
+//  - dependencies: [{name: , version: }] 
+//    - The dependencies of this revision, an array of
+//      objects referring to Revisions by name and version.
+//  - template: {name: , version: } - A reference to the script
+//                                    which serves as a template
+//                                    for this revision.
+//  - message: String - The commit message of this revision.
+//  - content: String - The content retrieved from the Git repository
 module.exports.findRevisionWithContent = findRevisionWithContent;
 
-// Sets the content of the given script. This causes the following:
-//  - The 'latestRevision' of this Script database entry is incremented.
-//  - A new Revision entry is inserted into the database, storing
-//    the 'message' argument.
-//  - The content of the Git repository associated with the Script
-//    is updated to the given content, and tagged with the new version.
-// The callback is called with the new version number.
-//
 // setContent(name, content, message, callback(error, newVersion))
+//
+// Sets the content of the given script. This causes the following:
+//  - The 'latestRevision' of the Script database entry with the 
+//    given 'name' is incremented.
+//  - A new Revision entry is inserted into the database
+//    - whose 'version' is the Script's 'latestVersion'
+//    - storing the 'message' argument
+//  - The content of the Git repository associated with the Script
+//    is updated to the given content and tagged with the new version.
+// The callback is called with the new version number.
 module.exports.setContent = setContent;
 
-// Inserts a new empty script with the given name and version.
+// insertNew(name, callback(error))
+//
+// Inserts a new empty Script with the given name.
 // This creates a new Script entry in the database, a first
 // Revision entry in the database, and also initializes a new
 // Git repository for the new script.
-// insertNew(name, callback(error))
 module.exports.insertNew = insertNew;
 
 // The version number used as the first version for new scripts.
 module.exports.FIRST_VERSION = firstVersion;
 
-// sets the prefix of the directory path used.
-// stays the default when running app.js
-// must be changed when node working dir is different (e.g. in export.js)
+// setDirectoryPrefix()
+// 
+// Sets the prefix of the directory path used.
+// Needs to be called only when the Node working directory
+// is different from where app.js is (e.g. in scripts/export.js)
 module.exports.setDirectoryPrefix = git.setDirectoryPrefix;
 
-// Evaluates the dependencies of the given revision.
-// If two versions of the same script are required, only the most
-// recent version is included.
-// The callback is called with 'dependencies', a list of objects
-// each with the properties
+// evaluateDependencies(name,version,callback(dependencies))
+//
+// Evaluates the dependencies of the Revision with the given 
+// 'name' and 'version'. If two versions of the same script are
+// required, only the most recent version is included. The 
+// callback argument 'dependencies' is a list of objects
+// with the properties
 //  - name
 //  - version
-// in topologically sorted order (including the given script).
-//
-// evaluateDependencies(name,version,callback(dependencies))
+// which rever to revisions. The 'dependencies' array is in
+// topologically sorted order with respect to the dependency
+// graph, and includes as the last entry the Revision with the
+// given 'name' and 'version'.
 module.exports.evaluateDependencies = evaluateDependencies;
 
-// Finds and returns the given revision (only metadata, no content)
-// callback(err, revision)
-module.exports.findRevision = db.findRevision;
-
-// Finds all scripts.
-// findAllScripts(callback(err, allScripts)) where allScripts is an 
-// array of objects which each have the following properties:
-//  - name: String,
-//  - latestVersion: Number
+// findAllScripts(callback(error, allScripts))
+// 
+// Finds all Script entries in the database.
+// The callback argument 'allScripts' is an array
+// of objects which each have the following properties:
+//  - name: String - The name of the script
+//  - latestVersion: String - The latest version of the script
 module.exports.findAllScripts = db.findAllScripts;
+
+// findAllRevisions(callback(error, allRevisions))
+//
+// Finds all revisions of the given script. The callback
+// argument 'allRevisions' is an array of objects which 
+// each have the following properties:
+//  - name: String - The name of the Script to which 
+//                   this revision belongs.
+//  - version: Number - The version of this revision
+//  - dependencies: [{name: , version: }] 
+//    - The dependencies of this revision, an array of
+//      objects referring to Revisions by name and version.
+//  - template: {name: , version: } - A reference to the script
+//                                    which serves as a template
+//                                    for this revision.
+//  - message: String - The commit message of this revision.
 module.exports.findAllRevisions = db.findAllRevisions;
