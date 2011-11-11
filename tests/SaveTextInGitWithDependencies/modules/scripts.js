@@ -106,30 +106,19 @@ module.exports.setContent = function(name, content, message, callback) {
           revision.dependencies.push({
             name: name, version: version
           });
-          console.log('saved dependency: '+name+version);
         },
         embedIn: function(name, version){
           revision.template = {
             name: name, version: version
           };
-          console.log('saved template: '+name+version);
         }
       });
-      console.log('Here 1');
       revision.save(function(err){
-        console.log('Here 2');
         if(err) callback(err);
         else{
-          console.log('Here 3');
-          /*Revision.findOne({ name: name, version:version }, function(err,revision){
-            console.log('dependencies in DB: '+revision.dependencies);
-          });*/
-          console.log('Here 4');
           git.setContent(name, content, function(err){
-            console.log('Here 5');
             if(err) callback(err);
             else git.tagRepo(name, revision.version, function(err){
-              console.log('Here 6');
               callback(err,revision.version);
             });
           });

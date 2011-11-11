@@ -67,13 +67,11 @@ app.get('/scripts/:name/:version', function(req, res) {
     if(err) throw err;
     scripts.getDependencies(name, version, function(err, dependencies){
       if(err) throw err;
-      if(!dependencies)
-        console.log('dependencies = null');
-      else
-        console.log('dependencies.length = '+dependencies.length);
-        
       res.render('scripts/edit', {locals: { revision: {
-        name:name, version: version, content: content, dependencies:dependencies
+        name:name, 
+        version: version, 
+        content: content, 
+        dependencies:dependencies,
       }}});
     });
   });

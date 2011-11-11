@@ -1,10 +1,12 @@
 h1 #{revision.name}
+  h3
+    a(href='/scripts/'+revision.name+'/'+revision.version+'/run') run
 h6 v#{revision.version}
  - if(revision.dependencies)
    h6 dependencies:
    ul
    each dependency in revision.dependencies
-     li 
+     li
        a(href='/scripts/'+dependency.name+'/'+dependency.version) #{dependency.name+' v'+dependency.version}
 form(action='/scripts/'+revision.name, method='POST')
   input(type='hidden', name='_method', value='PUT')
