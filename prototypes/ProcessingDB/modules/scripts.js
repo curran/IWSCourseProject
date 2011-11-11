@@ -118,6 +118,9 @@ function incrementLatestVersion(name, callback){
   });
 }
 
+// Finds the revision with the given name and version
+// in the database and returns it.
+// callback(error, revision)
 function findRevision(name, version, callback){
   Revision.findOne({
     name: name, version: version
@@ -125,6 +128,16 @@ function findRevision(name, version, callback){
     if(err) callback(err);
     else callback(null, revision.toObject());
   });
+};
+
+module.exports.disconnect = function(){
+  mongoose.disconnect();
+};
+
+// finds all revisions of the given script.
+// callback(err, revisions)
+module.exports.findAllRevisions = function(name, callback){
+  Revision.find({ name: name }, callback);
 };
 
 var git = require('./git');
@@ -179,15 +192,7 @@ module.exports.getDependencies = function(name, version, callback){
   });
 };
 
-// finds all revisions of the given script.
-// callback(err, revisions)
-module.exports.findAllRevisions = function(name, callback){
-  Revision.find({ name: name }, callback);
-};
 
-module.exports.disconnect = function(){
-  mongoose.disconnect();
-};
 
 // sets the prefix of the directory path used.
 // stays the default when running app.js
@@ -223,10 +228,8 @@ function addDependenciesOfScript(script, dependencies, callback){
     // doesn't matter, and this code ensures that all dependencies are
     // in the dependency list before the scripts that depend on them.
     script.dependencies.forEach(function(dependency){
-      Revision.findOne({
-        name: dependency.name,
-        version: dependency.version
-      },function(err, dependency){
+      findRevision(dependency.name, dependency.version,
+                   function(err, dependency){
         // add this script's dependencies to the dependency list,
         addDependenciesOfScript(dependency,dependencies,function(){
           if(--left === 0)
