@@ -62,18 +62,11 @@ app.get('/scripts/:name/versions', function(req, res) {
 });
 
 app.get('/scripts/:name/:version', function(req, res) {
-  var name = req.params.name, version = req.params.version;
-  scripts.getContent(req.params, function(err, content){
+  scripts.findRevisionWithContent(req.params.name,
+                                  req.params.version,
+                                  function(err, revision){
     if(err) throw err;
-    scripts.getDependencies(name, version, function(err, dependencies){
-      if(err) throw err;
-      res.render('scripts/edit', {locals: { revision: {
-        name:name, 
-        version: version, 
-        content: content, 
-        dependencies:dependencies,
-      }}});
-    });
+    res.render('scripts/edit', {locals: {revision: revision}});
   });
 });
 
@@ -83,7 +76,9 @@ app.get('/scripts/:name/:version/run', function(req, res) {
   scripts.findRevision(name, version, function(err, revision){
     function getTemplatePieces(callback){
       if(revision.template)
-        scripts.getContent(revision.template, function(err, content){
+        scripts.getContent(revision.template.name,
+                           revision.template.version,
+                           function(err, content){
           var pieces = content.split('${code}');
           callback(true,pieces[0], pieces[1]);
         });
@@ -111,7 +106,7 @@ app.get('/scripts/:name/:version/run', function(req, res) {
           }
           else{
             var d = dependencies.splice(0,1)[0];
-            scripts.getContent(d, function(err, content){
+            scripts.getContent(d.name, d.version, function(err, content){
               if(err) throw err;
               var lines = content.split('\n');
               for(var i = 0; i < lines.length; i++){

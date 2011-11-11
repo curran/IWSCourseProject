@@ -1,151 +1,12 @@
-var mongoose = require('mongoose'),
-    Schema   = mongoose.Schema;
+var db  = require('./db'),
+    git = require('./git');
 
-var RevisionPointers = new Schema({
-  name: String,
-  version: Number
-});
-
-var Revisions = new Schema({
-  name: String,
-  version: Number,
-  dependencies: [RevisionPointers],
-  template: {
-    name: String,
-    version: Number
-  },
-  message: {type: String, default:''}
-});
-
-var Scripts = new Schema({
-  name: String,
-  latestVersion: Number
-});
-
-var connectResult = mongoose.connect('mongodb://localhost/mydatabase');
-mongoose.model('Script',Scripts);
-mongoose.model('Revision',Revisions);
-
-var Script = mongoose.model('Script');
-var Revision = mongoose.model('Revision');
-
+// The version number used as the first version for new scripts.
+// TODO make this into a string
 var firstVersion = 0;
-module.exports.FIRST_VERSION = firstVersion;
 
-// Clear the DB for testing
-module.exports.clearDB = function(callback){
-  Revision.remove({},function(){
-    Script.remove({},callback);
-  });
-}
-
-// Finds all scripts, callback(err, allScripts)
-module.exports.findAllScripts = function(callback){
-  Script.find({},callback);
-};
-
-// inserts a new script and its first version into
-// the database, with the given name and blank content.
-// callback(error)
-function insertNewScript(name, callback){
-  var script = new Script(), revision = new Revision();
-  script.name = revision.name = name;
-  script.latestVersion = revision.version = firstVersion;
-  script.save(function(err){
-    if(err) callback(err);
-    else revision.save(callback);
-  });
-}
-
-// Parses the dependencies out of the given script content.
-// callbacks.dependsOn(name, version) is called for each '@depends' occurance.
-// callbacks.embedIn(name, version) is called for each '@embed in' occurance.
-function parseContent(content, callbacks){
-  var lines = content.split('\n');
-  for(var i = 0; i < lines.length; i++){
-    var line = lines[i];
-    var dependsOn = line.indexOf('@depends') != -1;
-    var embedIn = line.indexOf('@embed') != -1;
-    
-    if(dependsOn || embedIn){
-      var tokens = line.split(' ');
-      var name = tokens[2];
-      var version = tokens[3];
-      if(dependsOn)
-        callbacks.dependsOn(name, version);
-      else if(embedIn)
-        callbacks.embedIn(name, version);
-    }
-  }
-}
-
-// Saves the given revision to the database.
-// revision = { name:,  version:, message:, content:}
-// callback(error)
-function saveRevision(revision, callback){
-  var revisionInDB = new Revision();
-  revisionInDB.name = revision.name;
-  revisionInDB.version = revision.version;
-  revisionInDB.message = revision.message;
-  parseContent(revision.content, {
-    dependsOn: function(name, version){
-      revisionInDB.dependencies.push({
-        name: name, version: version
-      });
-    },
-    embedIn: function(name, version){
-      revisionInDB.template = {
-        name: name, version: version
-      };
-    }
-  });
-  revisionInDB.save(callback);
-}
-
-// Increments the latest version of the script 
-// with the given name.
-// callback(error, latestVersion)
-function incrementLatestVersion(name, callback){
-  Script.findOne({ name: name }, function(err, script){
-    if(err) callback(err);
-    else{
-      script.latestVersion = Math.round(script.latestVersion*100+1)/100.0;
-      // script.latestVersion + 0.01 leads to stuff like 0.10999999999999999
-      script.save(function(err){
-        callback(err, script.latestVersion);
-      });
-    }
-  });
-}
-
-// Finds the revision with the given name and version
-// in the database and returns it.
-// callback(error, revision)
-function findRevision(name, version, callback){
-  Revision.findOne({
-    name: name, version: version
-  }, function(err, revision){
-    if(err) callback(err);
-    else callback(null, revision.toObject());
-  });
-};
-
-module.exports.disconnect = function(){
-  mongoose.disconnect();
-};
-
-// finds all revisions of the given script.
-// callback(err, revisions)
-module.exports.findAllRevisions = function(name, callback){
-  Revision.find({ name: name }, callback);
-};
-
-var git = require('./git');
-
-// inserts a new script with the given name and blank content.
-// callback(error)
-module.exports.insertNew = function(name, callback) {
-  insertNewScript(name, function(err){
+function insertNew(name, callback) {
+  db.insertNewScript(name, firstVersion, function(err){
     if(err) callback(err);
     else git.createRepo(name,function(err){
       if(err) callback(err);
@@ -154,12 +15,9 @@ module.exports.insertNew = function(name, callback) {
   });
 }
 
-
-// sets the content of the script with the given name to the given value
-// callback(error, version)
-module.exports.setContent = function(name, content, message, callback) {
-  incrementLatestVersion(name, function(err, latestVersion){
-    saveRevision({
+function setContent(name, content, message, callback) {
+  db.incrementLatestVersion(name, function(err, latestVersion){
+    db.saveRevision({
       name: name,
       content: content,
       message: message,
@@ -176,29 +34,22 @@ module.exports.setContent = function(name, content, message, callback) {
   });
 };
 
-// gets the content of the given revision
-// revisionPointer = {name: ... , version: ...}
-// callback(err, content)
-module.exports.getContent = function(revisionPointer, callback){
-  git.getContent(revisionPointer.name, revisionPointer.version, callback);
-};
-
-// gets the dependencies for the given revision pointer
-// callback(err, dependencies)
-module.exports.getDependencies = function(name, version, callback){
-  findRevision(name, version, function(err, revision){
+function findRevisionWithContent(name, version, callback){
+  db.findRevision(name, version, function(err, revision){
     if(err) callback(err);
-    else callback(err, revision.dependencies);
+    else git.getContent(name, version, function(err, content){
+      if(err) callback(err);
+      else{
+        revision.content = content;
+        callback(err, revision);
+      }
+    });
   });
-};
+}
 
-
-
-// sets the prefix of the directory path used.
-// stays the default when running app.js
-// must be changed when node working dir is different (e.g. in export.js)
-module.exports.setDirectoryPrefix = git.setDirectoryPrefix;
-
+// gets the content of the given revision
+// getContent(name, version, callback(err, content))
+module.exports.getContent = git.getContent;
 
 function addScriptToDependencies(script, dependencies, callback){
   var scriptAlreadyInDependencies = false;
@@ -228,7 +79,7 @@ function addDependenciesOfScript(script, dependencies, callback){
     // doesn't matter, and this code ensures that all dependencies are
     // in the dependency list before the scripts that depend on them.
     script.dependencies.forEach(function(dependency){
-      findRevision(dependency.name, dependency.version,
+      db.findRevision(dependency.name, dependency.version,
                    function(err, dependency){
         // add this script's dependencies to the dependency list,
         addDependenciesOfScript(dependency,dependencies,function(){
@@ -244,12 +95,8 @@ function addDependenciesOfScript(script, dependencies, callback){
     addScriptToDependencies(script,dependencies,callback);
 }
 
-// Evaluates the dependencies of the given revision (specified by name and version).
-// If two versions of the same script are required, only the most
-// recent version is included.
-// callback(dependencies) where dependencies is a list of revision pointers.
-module.exports.evaluateDependencies = function (name,version,callback){
-  Revision.findOne({ name: name, version:version }, function(err,revision){
+function evaluateDependencies(name,version,callback){
+  db.findRevision(name, version, function(err,revision){
     var dependencies = [];
     addDependenciesOfScript(revision,dependencies,function(){
       callback(dependencies);
@@ -257,8 +104,62 @@ module.exports.evaluateDependencies = function (name,version,callback){
   });
 }
 
+// Finds the revision with the given name and version.
+// callback(error, revision) where 'revision' has:
+//  - name: String
+//  - version: Number
+//  - dependencies: [{name: String, version: Number}]
+//  - template: {name: String, version: Number}
+//  - message: String
+//  - content: String <- retrieved from the Git repository
+module.exports.findRevisionWithContent = findRevisionWithContent;
 
+// Sets the content of the given script. This causes the following:
+//  - The 'latestRevision' of this Script database entry is incremented.
+//  - A new Revision entry is inserted into the database, storing
+//    the 'message' argument.
+//  - The content of the Git repository associated with the Script
+//    is updated to the given content, and tagged with the new version.
+// The callback is called with the new version number.
+//
+// setContent(name, content, message, callback(error, newVersion))
+module.exports.setContent = setContent;
+
+// Inserts a new empty script with the given name and version.
+// This creates a new Script entry in the database, a first
+// Revision entry in the database, and also initializes a new
+// Git repository for the new script.
+// insertNew(name, callback(error))
+module.exports.insertNew = insertNew;
+
+// The version number used as the first version for new scripts.
+module.exports.FIRST_VERSION = firstVersion;
+
+// sets the prefix of the directory path used.
+// stays the default when running app.js
+// must be changed when node working dir is different (e.g. in export.js)
+module.exports.setDirectoryPrefix = git.setDirectoryPrefix;
+
+// Evaluates the dependencies of the given revision.
+// If two versions of the same script are required, only the most
+// recent version is included.
+// The callback is called with 'dependencies', a list of objects
+// each with the properties
+//  - name
+//  - version
+// in topologically sorted order (including the given script).
+//
+// evaluateDependencies(name,version,callback(dependencies))
+module.exports.evaluateDependencies = evaluateDependencies;
 
 // Finds and returns the given revision (only metadata, no content)
 // callback(err, revision)
-module.exports.findRevision = findRevision;
+module.exports.findRevision = db.findRevision;
+
+// Finds all scripts.
+// findAllScripts(callback(err, allScripts)) where allScripts is an 
+// array of objects which each have the following properties:
+//  - name: String,
+//  - latestVersion: Number
+module.exports.findAllScripts = db.findAllScripts;
+module.exports.findAllRevisions = db.findAllRevisions;
