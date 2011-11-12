@@ -4,7 +4,6 @@
 // API documentation at the bottom of the file.
 //
 // Author: Curran Kelleher
-// Last updated 11/11/2011
 
 var mongoose = require('mongoose'),
     Schema   = mongoose.Schema;
@@ -61,6 +60,7 @@ function insertNewScript(name, firstVersion, callback){
 // Parses the dependencies out of the given script content.
 // callbacks.dependsOn(name, version) is called for each '@depends' occurance.
 // callbacks.embedIn(name, version) is called for each '@embed in' occurance.
+// callbacks.error(err) is called if there is an error.
 function parseContent(content, callbacks){
   var lines = content.split('\n');
   for(var i = 0; i < lines.length; i++){
@@ -74,6 +74,8 @@ function parseContent(content, callbacks){
     
     if(dependsOn || embedIn){
       var tokens = line.split(' ');
+      //if(tokens.length != 4)
+      //  callback(err
       var name = tokens[2];
       var version = tokens[3];
       if(dependsOn)

@@ -3,7 +3,6 @@
 // API documentation at the bottom of the file.
 //
 // Author: Curran Kelleher
-// Last updated 11/11/11
 
 var spawn = require('child_process').spawn,
     fs = require('fs');

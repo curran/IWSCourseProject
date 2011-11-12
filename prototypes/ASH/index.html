@@ -16,10 +16,11 @@
 var CIRCLE = "Circle";
 
 // default coordinates and colors for new circles
-var defaults = { 'x' : 5, 'y' : 10, 'r' : 0, 'g' : 0, 'b' : 0 , 'text':'text'}
-
-// circle size
-var circleDiameter = 30;
+var defaults = { 
+  'x' : 5, 'y' : 10, 'diameter':30,
+  'r' : 0, 'g' : 0, 'b' : 0 ,
+  'text':''
+}
 
 // a flag to signal redrawing
 var graphicsDirty = true;
@@ -27,6 +28,9 @@ var graphicsDirty = true;
 // the list of circle objects managed by the plugin,
 // each corresponding to an ASH resource of type CIRCLE
 var circles = {};
+
+// The screen space diamater (in pixels) given to new circles.
+var defaultDiameterOnScreen = 30;
 
 var viewMinX, viewMaxX, viewMinY, viewMaxY;
 var goingRight=false, goingLeft=false, goingIn=false, goingOut=false, goingUp=false, goingDown=false;
@@ -45,7 +49,7 @@ ASH.registerPlugin({
     return {
       //the function that sets a value on a 'circle'
       set:function(property,value){
-        //assuming 'property' in {x,y,r,g,b,text}
+        //assuming 'property' in {x,y,diameter,r,g,b,text}
         circles[resourceId][property] = value;
         graphicsDirty = true;
       },
@@ -77,7 +81,7 @@ function sketch(p){
     for(i in circles){
       var circle = circles[i];
       var dist2 = Math.pow(circle.x - x,2)+Math.pow(circle.y - y,2);
-      var radius2 = Math.pow(circleDiameter/2,2);
+      var radius2 = Math.pow(circle.diameter/2,2);
       if(dist2 < radius2)
         return circle;
     }
@@ -101,6 +105,7 @@ function sketch(p){
     
     var offsetX = spanX*dx;
     var offsetY = spanY*dy;
+    
     viewMinX = middleX - spanX + offsetX;
     viewMaxX = middleX + spanX + offsetX;
     viewMinY = middleY - spanY + offsetY;
@@ -120,18 +125,23 @@ function sketch(p){
   };
   
   function screenToDataSpaceX(screenSpaceX){
-    return (viewMaxX-viewMinX) * screenSpaceX/p.width;
+    return screenSpaceX/p.width*(viewMaxX-viewMinX)+viewMinX;
   }
+  
   function screenToDataSpaceY(screenSpaceY){
-    return (viewMaxY-viewMinY) * screenSpaceY/p.height;
+    return screenSpaceY/p.height*(viewMaxY-viewMinY)+viewMinY;
+  }
+  
+  function screenToDataSpace(screenSpaceLength){
+    return screenSpaceLength*(viewMaxX-viewMinX)/p.width;
   }
   
   function dataToScreenSpaceX(dataSpaceX){
-    return dataSpaceX/(viewMaxX-viewMinX)*p.width;
+    return (dataSpaceX-viewMinX)/(viewMaxX-viewMinX)*p.width;
   }
   
   function dataToScreenSpaceY(dataSpaceY){
-    return dataSpaceY/(viewMaxY-viewMinY)*p.height;
+    return (dataSpaceY-viewMinY)/(viewMaxY-viewMinY)*p.height;
   }
   
   function dataToScreenSpace(dataSpaceLength){
@@ -150,10 +160,12 @@ function sketch(p){
         var x = dataToScreenSpaceX(circle.x);
         var y = dataToScreenSpaceY(circle.y);
         
-        var size = dataToScreenSpace(circleDiameter);
+        var size = dataToScreenSpace(circle.diameter);
         p.ellipse(x, y, size, size);
-        p.fill(0);
-        p.text(circle.text,x,y);
+        if(circle.text){
+          p.fill(0);
+          p.text(circle.text,x,y);
+        }
       }
       graphicsDirty = false;
     }
@@ -175,7 +187,9 @@ function sketch(p){
         ASH.set(resourceId,'r',random255());
         ASH.set(resourceId,'g',random255());
         ASH.set(resourceId,'b',random255());
-        ASH.set(resourceId,'text',prompt("Please enter your text",""));
+        ASH.set(resourceId,'diameter',
+          screenToDataSpace(defaultDiameterOnScreen));
+        //ASH.set(resourceId,'text',prompt("Please enter your text",""));
         ASH.commit();
         graphicsDirty = true;
       });
@@ -213,7 +227,6 @@ function sketch(p){
     }
   };
   p.keyPressed = function(){
-    console.log('pressed');
     if (p.key == 100)/*d*/         goingIn = true;
     else if (p.key == 99)/*c*/     goingOut = true;
     else if (p.keyCode == p.UP)    goingUp = true;

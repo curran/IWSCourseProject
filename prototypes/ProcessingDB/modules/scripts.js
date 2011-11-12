@@ -5,7 +5,6 @@
 // API documentation at the bottom of the file.
 //
 // Author: Curran Kelleher
-// Last updated 11/11/11
 
 var db  = require('./db'),
     git = require('./git');
@@ -55,8 +54,6 @@ function findRevisionWithContent(name, version, callback){
     });
   });
 }
-
-
 
 function addScriptToDependencies(script, dependencies, callback){
   var scriptAlreadyInDependencies = false;
