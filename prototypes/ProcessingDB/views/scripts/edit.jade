@@ -1,6 +1,7 @@
 h1 #{revision.name}
-  h3
-    a(href='/scripts/'+revision.name+'/'+revision.version+'/run') run
+ - if(revision.template)
+    h3
+      a(href='/scripts/'+revision.name+'/'+revision.version+'/run') run
 h6 v#{revision.version}
  - if(revision.dependencies)
    h6 dependencies:
