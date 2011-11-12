@@ -12,6 +12,7 @@ form(action='/scripts/'+revision.name, method='POST')
   p(style='float:right')
     input(type='text', id='revision_message', name='revision[message]')
     input(type='submit', value='Save')
+    a(href='/scripts/'+revision.name+'/versions',target='_blank') versions
   div(style='clear:both;')
   textArea(type='text', id='revision_content', 
            style='float:center',
@@ -30,7 +31,6 @@ form(action='/scripts/'+revision.name, method='POST')
       | , embedded in 
       a(href='/scripts/'+d.name+'/'+d.version)
         #{revision.template.name+' '+revision.template.version}
-  p(style='float:right')
-    a(href='/scripts/'+revision.name+'/versions') versions
+    
 script
   var myCodeMirror = CodeMirror.fromTextArea(revision_content);
