@@ -1,20 +1,20 @@
-
 form(action='/scripts/'+revision.name, method='POST')
   input(type='hidden', name='_method', value='PUT')
-  div
-    p(style='float:left')
-      #{revision.name+' '+revision.version}
-      - if(revision.template)
-        a(href='/scripts/'+revision.name+'/'+revision.version+'/run') run
-    p(style='float:right')
-      input(type='text', id='revision_message', name='revision[message]')
-      input(type='submit', value='Save')
+  p(style='float:left')
+    #{revision.name+' '+revision.version}
+    - if(revision.template)
+      a(href='/scripts/'+revision.name+'/'+revision.version+'/run') run
+  p(style='float:right')
+    input(type='text', id='revision_message', name='revision[message]')
+    input(type='submit', value='Save')
   p
-    textArea(type='text',              id='revision_content', 
+    textArea(type='text', id='revision_content', 
+             style='float:center',
              name='revision[content]', 
              style='width:100%;height:500px')= revision.content
-  - if(revision.dependencies && revision.dependencies.length != 0)
-    p depends on 
+  p(style='float:left')
+    - if(revision.dependencies && revision.dependencies.length != 0)
+      | depends on 
       //each dependency in revision.dependencies
       - var n = revision.dependencies.length;
       - for(var i = 0; i < n; i++)
@@ -22,11 +22,9 @@ form(action='/scripts/'+revision.name, method='POST')
           a(href='/scripts/'+d.name+'/'+d.version) #{d.name+' '+d.version}
           - if(i < n-1)
             , 
-  - if(revision.template)
-    p embedded in 
+    - if(revision.template)
+      | , embedded in 
       a(href='/scripts/'+d.name+'/'+d.version)
         #{revision.template.name+' '+revision.template.version}
-  p
-    a(href='/scripts/'+revision.name+'/versions') See all versions
-    
-    
+  p(style='float:right')
+    a(href='/scripts/'+revision.name+'/versions') versions

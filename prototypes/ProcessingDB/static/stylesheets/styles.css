@@ -3,8 +3,6 @@ body {
   font-size: 16px;
 }
 #main{
-  width: 960px;
   margin: 0 auto;
-  border: 1px solid #ddd;
-  padding: 1em;
+  padding: 0px;
 }
