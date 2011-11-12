@@ -4,6 +4,7 @@ var express = require('express'),
 var app = express.createServer();
 
 app.configure(function(){
+  app.use(express.logger());
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.static(__dirname + '/static'));
@@ -19,7 +20,6 @@ app.configure('development',function(){
 
 // NODE_ENV=production node app.js
 app.configure('production',function(){
-  app.use(express.logger());
   app.use(express.errorHandler());
 });
 
