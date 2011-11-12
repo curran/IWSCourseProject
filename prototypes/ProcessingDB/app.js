@@ -55,6 +55,8 @@ app.post('/scripts', function(req, res){
           error:"Oops! The script name \""+name
                +"\" is already taken. Please choose another name.",
           name:name}});
+      else
+        res.render('scripts/error', {locals: {error:err}});
       console.log('"'+err+'"');
     }
     else res.redirect('/scripts/'+name+'/'+scripts.FIRST_VERSION);
@@ -63,11 +65,13 @@ app.post('/scripts', function(req, res){
 
 app.get('/scripts/:name/versions', function(req, res) {
   scripts.findAllRevisions(req.params.name,function(err, revisions){
-    if(err) throw err;
-    res.render('scripts/versions', {locals: {
-      name:req.params.name,
-      revisions: revisions
-    }});
+    if(err)
+      res.render('scripts/error', {locals: {error:err}});
+    else 
+      res.render('scripts/versions', {locals: {
+        name:req.params.name,
+        revisions: revisions
+      }});
   });
 });
 
@@ -75,8 +79,10 @@ app.get('/scripts/:name/:version', function(req, res) {
   scripts.findRevisionWithContent(req.params.name,
                                   req.params.version,
                                   function(err, revision){
-    if(err) throw err;
-    res.render('scripts/edit', {locals: {revision: revision}});
+    if(err)
+      res.render('scripts/error', {locals: {error:err}});
+    else 
+      res.render('scripts/edit', {locals: {revision: revision}});
   });
 });
 

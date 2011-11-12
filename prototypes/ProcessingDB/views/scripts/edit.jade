@@ -3,6 +3,7 @@
 | <script src="../../CodeMirror-2.16/mode/javascript/javascript.js"></script>
 | <link rel="stylesheet" href="../../CodeMirror-2.16/theme/default.css">
 | <style type="text/css">.CodeMirror {border: 1px solid #B8B8B8;}</style>
+| <style type="text/css">.CodeMirror-scroll {height: auto; overflow: visible;}</style>
 form(action='/scripts/'+revision.name, method='POST')
   input(type='hidden', name='_method', value='PUT')
   h3(style='float:left;margin-left:5px;')
@@ -17,7 +18,7 @@ form(action='/scripts/'+revision.name, method='POST')
   textArea(type='text', id='revision_content', 
            style='float:center',
            name='revision[content]', 
-           style='width:100%;height:600px;')= revision.content
+           style='width:100%;height:800px;')= revision.content
   p(style='float:left')
     - if(revision.dependencies && revision.dependencies.length != 0)
       | depends on 

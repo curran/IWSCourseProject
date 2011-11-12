@@ -128,7 +128,10 @@ function findRevision(name, version, callback){
     name: name, version: version
   }, function(err, revision){
     if(err) callback(err);
-    else callback(null, revision.toObject());
+    if(revision)
+      callback(null, revision.toObject());
+    else
+      callback('Revision \"'+name+' '+version+'\" not found.');
   });
 };
 
