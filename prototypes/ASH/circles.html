@@ -162,18 +162,9 @@ function sketch(p){
         
         var size = dataToScreenSpace(circle.diameter);
         p.ellipse(x, y, size, size);
-        
-        if(circle.text && size > 7){
-          p.fill(0);
-          var roundedSize = Math.round(size);
-          console.log('roundedSize = '+roundedSize);
-          p.fill(200);
-          p.textSize(roundedSize);
-          var width = p.textWidth(circle.text);
-          p.rect(x,y-size,width,size);
+        if(circle.text){
           p.fill(0);
           p.text(circle.text,x,y);
-          
         }
       }
       graphicsDirty = false;
@@ -187,25 +178,21 @@ function sketch(p){
     
     var circleUnderPoint = getCircleUnderPoint(dataSpaceX, dataSpaceY);
     if(circleUnderPoint == undefined){
-      // Prompt for text
-      var text = prompt("Please enter your text","");
       // create a circle
-      if(text != null){
-        ASH.genResourceId(function(resourceId){
-          ASH.begin();
-          ASH.set(resourceId,ASH.TYPE,CIRCLE);
-          ASH.set(resourceId,'x',dataSpaceX);
-          ASH.set(resourceId,'y',dataSpaceY);
-          ASH.set(resourceId,'r',random255());
-          ASH.set(resourceId,'g',random255());
-          ASH.set(resourceId,'b',random255());
-          ASH.set(resourceId,'diameter',
-            screenToDataSpace(defaultDiameterOnScreen));
-          ASH.set(resourceId,'text',text);
-          ASH.commit();
-          graphicsDirty = true;
-        });
-      }
+      ASH.genResourceId(function(resourceId){
+        ASH.begin();
+        ASH.set(resourceId,ASH.TYPE,CIRCLE);
+        ASH.set(resourceId,'x',dataSpaceX);
+        ASH.set(resourceId,'y',dataSpaceY);
+        ASH.set(resourceId,'r',random255());
+        ASH.set(resourceId,'g',random255());
+        ASH.set(resourceId,'b',random255());
+        ASH.set(resourceId,'diameter',
+          screenToDataSpace(defaultDiameterOnScreen));
+        //ASH.set(resourceId,'text',prompt("Please enter your text",""));
+        ASH.commit();
+        graphicsDirty = true;
+      });
     }
     else{
       // delete the circle under point
