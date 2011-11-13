@@ -74,14 +74,21 @@ function parseContent(content, callbacks){
     
     if(dependsOn || embedIn){
       var tokens = line.split(' ');
-      //if(tokens.length != 4)
-      //  callback(err
-      var name = tokens[2];
-      var version = tokens[3];
-      if(dependsOn)
-        callbacks.dependsOn(name, version);
-      else if(embedIn)
-        callbacks.embedIn(name, version);
+      if(tokens.length != 4){
+        if(dependsOn)
+          callbacks.error("Oops! Script not saved - invalid syntax in \""+line+"\". If a script depends on version 0.05 of script A, the syntax should be: \"@depends on A 0.05\"");
+        else if(embedIn)
+          callbacks.error("Oops! Script not saved - invalid syntax in \""+line+"\". If a script is embedded into version 0.05 of script A, the syntax should be: \"@embed in A 0.05\"");
+        return;
+      }
+      else{
+        var name = tokens[2];
+        var version = tokens[3];
+        if(dependsOn)
+          callbacks.dependsOn(name, version);
+        else if(embedIn)
+          callbacks.embedIn(name, version);
+      }
     }
   }
 }
@@ -91,6 +98,7 @@ function saveRevision(revision, callback){
   revisionInDB.name = revision.name;
   revisionInDB.version = revision.version;
   revisionInDB.message = revision.message;
+  var error = null;
   parseContent(revision.content, {
     dependsOn: function(name, version){
       revisionInDB.dependencies.push({
@@ -102,12 +110,20 @@ function saveRevision(revision, callback){
       revisionInDB.template = {
         name: name, version: version
       };
+    },
+    error: function(err){
+      error = err;
     }
     //TODO parse occurances of '${code}'
     //TODO report error when '${code}' is present with 
     //     either '@depends on' or '@embed in'
   });
-  revisionInDB.save(callback);
+  if(!error){
+    revisionInDB.save(callback);
+  }
+  else{
+    callback(error);
+  }
 }
 
 function incrementLatestVersion(name, callback){
@@ -129,11 +145,13 @@ function findRevision(name, version, callback){
   Revision.findOne({
     name: name, version: version
   }, function(err, revision){
-    if(err) callback(err);
-    if(revision)
-      callback(null, revision.toObject());
+    if(err)
+      callback(err);
     else
-      callback('Revision \"'+name+' '+version+'\" not found.');
+      if(revision)
+        callback(null, revision.toObject());
+      else
+        callback('Revision \"'+name+' '+version+'\" not found.');
   });
 };
 

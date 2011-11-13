@@ -146,8 +146,10 @@ app.put('/scripts/:name', function(req, res){
   var message = req.body.revision.message;
   
   scripts.setContent(name, content, message, function(err, version){
-    if(err) throw err;
-    res.redirect('/scripts/'+name+'/'+version);
+    if(err)
+      res.render('scripts/error', {locals: {error:err}});
+    else
+      res.redirect('/scripts/'+name+'/'+version);
   });
 });
 
