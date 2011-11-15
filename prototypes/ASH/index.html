@@ -12,8 +12,9 @@
 // TODO next
 // - Replace circles with strings
 
-// the ID for the Circle ASH resource type
+// The ID for the Circle and Connection ASH resource types
 var CIRCLE = "Circle";
+var CONNECTION = "Connection";
 
 // default coordinates and colors for new circles
 var defaults = { 
@@ -28,6 +29,8 @@ var graphicsDirty = true;
 // the list of circle objects managed by the plugin,
 // each corresponding to an ASH resource of type CIRCLE
 var circles = {};
+
+var connections = {};
 
 // The screen space diamater (in pixels) given to new circles.
 var defaultDiameterOnScreen = 30;
@@ -72,8 +75,34 @@ ASH.registerPlugin({
   }
 });
 
+ASH.registerPlugin({
+  type: CONNECTION,
+  // the function that creates a resource,
+  // called when the 'type' property is set.
+  create: function(resourceId){
+    var connection = {resourceId:resourceId};
+    connections[resourceId] = connection;
+    return {
+      set:function(property,value){
+        //assuming 'property' in {circleA,circleB}
+        connections[resourceId][property] = value;
+        graphicsDirty = true;
+      },
+      unset:function(property){
+        delete connections[resourceId][property];
+        graphicsDirty = true;
+      }
+    };
+  },
+  delete:function(resourceId){
+    delete(connections[resourceId]);
+    graphicsDirty = true;
+  }
+});
+
 function sketch(p){
   var circleBeingMoved = undefined;
+  var circleBeingConnected = undefined;
   
   function getCircleUnderPoint(x,y){
     // get the text bounding box using this example
@@ -162,11 +191,10 @@ function sketch(p){
         
         var size = dataToScreenSpace(circle.diameter);
         p.ellipse(x, y, size, size);
-        
+        /*
         if(circle.text && size > 7){
           p.fill(0);
           var roundedSize = Math.round(size);
-          console.log('roundedSize = '+roundedSize);
           p.fill(200);
           p.textSize(roundedSize);
           var width = p.textWidth(circle.text);
@@ -174,50 +202,91 @@ function sketch(p){
           p.fill(0);
           p.text(circle.text,x,y);
           
-        }
+        }*/
+      }
+      for(i in connections){
+        var connection = connections[i];
+        var a = circles[connection.circleA];
+        var b = circles[connection.circleB];
+        //console.log('connection.circleA = '+connection.circleA);
+        var x1 = dataToScreenSpaceX(a.x);
+        var y1 = dataToScreenSpaceY(a.y);
+        var x2 = dataToScreenSpaceX(b.x);
+        var y2 = dataToScreenSpaceY(b.y);
+        p.line(x1,y1,x2,y2);
+      }
+      if(circleBeingConnected != undefined){
+        var x1 = dataToScreenSpaceX(circleBeingConnected.x);
+        var y1 = dataToScreenSpaceY(circleBeingConnected.y);
+        var x2 = p.mouseX;
+        var y2 = p.mouseY;
+        p.fill(0);
+        p.line(x1,y1,x2,y2);
       }
       graphicsDirty = false;
     }
   };
   
   p.mouseClicked = function(){
-  
     var dataSpaceX = screenToDataSpaceX(p.mouseX);
     var dataSpaceY = screenToDataSpaceY(p.mouseY);
     
     var circleUnderPoint = getCircleUnderPoint(dataSpaceX, dataSpaceY);
-    if(circleUnderPoint == undefined){
-      // Prompt for text
-      var text = prompt("Please enter your text","");
-      // create a circle
-      if(text != null){
+    
+    if(circleBeingConnected != undefined){
+      if(circleUnderPoint == undefined)
+        //"connect to nowhere" --> stop drawing the line
+        circleBeingConnected = null;
+      else{
         ASH.genResourceId(function(resourceId){
           ASH.begin();
-          ASH.set(resourceId,ASH.TYPE,CIRCLE);
-          ASH.set(resourceId,'x',dataSpaceX);
-          ASH.set(resourceId,'y',dataSpaceY);
-          ASH.set(resourceId,'r',random255());
-          ASH.set(resourceId,'g',random255());
-          ASH.set(resourceId,'b',random255());
-          ASH.set(resourceId,'diameter',
-            screenToDataSpace(defaultDiameterOnScreen));
-          ASH.set(resourceId,'text',text);
+          ASH.set(resourceId,ASH.TYPE,CONNECTION);
+          ASH.set(resourceId,'circleA',circleBeingConnected.resourceId);
+          ASH.set(resourceId,'circleB',circleUnderPoint.resourceId);
           ASH.commit();
           graphicsDirty = true;
+          circleBeingConnected = undefined;
         });
       }
     }
     else{
-      // delete the circle under point
-      var circle = circleUnderPoint.resourceId;
-      ASH.begin();
-      ASH.unset(circle,'x');
-      ASH.unset(circle,'y');
-      ASH.unset(circle,'r');
-      ASH.unset(circle,'g');
-      ASH.unset(circle,'b');
-      ASH.unset(circle,ASH.TYPE);
-      ASH.commit();
+      if(p.mouseButton == p.RIGHT && circleUnderPoint != undefined){
+        // delete the circle under point
+        var circle = circleUnderPoint.resourceId;
+        ASH.begin();
+        ASH.unset(circle,'x');
+        ASH.unset(circle,'y');
+        ASH.unset(circle,'r');
+        ASH.unset(circle,'g');
+        ASH.unset(circle,'b');
+        ASH.unset(circle,ASH.TYPE);
+        ASH.commit();
+      }
+      else if(p.mouseButton == p.LEFT){
+        if(circleUnderPoint == undefined){
+          // Prompt for text
+          var text = prompt("Please enter your text","");
+          // create a circle
+          if(text != null){
+            ASH.genResourceId(function(resourceId){
+              ASH.begin();
+              ASH.set(resourceId,ASH.TYPE,CIRCLE);
+              ASH.set(resourceId,'x',dataSpaceX);
+              ASH.set(resourceId,'y',dataSpaceY);
+              ASH.set(resourceId,'r',random255());
+              ASH.set(resourceId,'g',random255());
+              ASH.set(resourceId,'b',random255());
+              ASH.set(resourceId,'diameter',
+                screenToDataSpace(defaultDiameterOnScreen));
+              ASH.set(resourceId,'text',text);
+              ASH.commit();
+              graphicsDirty = true;
+            });
+          }
+        } else if(circleUnderPoint!=undefined){
+          circleBeingConnected = circleUnderPoint;
+        }
+      }
     }
   };
   p.mousePressed = function(){

@@ -1,0 +1,8 @@
+Prathiba and Curran 11/14
+TODO:
+ - Solve text memory issues (memory leak)
+ - Draw different thicknesses for connections
+ - Center the text
+ - Use the text bounding box for inside testing
+ - Draw ellipses behind text and above connections
+ - Solve ASH problems
