@@ -14,7 +14,9 @@ var db  = require('./db'),
 var firstVersion = 0;
 
 function insertNew(name, callback) {
-  db.insertNewScript(name, firstVersion, function(err){
+  if(name === '')
+    callback(new Error('Please enter a script name.'));
+  else db.insertNewScript(name, firstVersion, function(err){
     if(err) callback(err);
     else git.createRepo(name,function(err){
       if(err) callback(err);

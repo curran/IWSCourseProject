@@ -48,12 +48,20 @@ function findAllRevisions(name, callback){
 }
 
 function insertNewScript(name, firstVersion, callback){
-  var script = new Script(), revision = new Revision();
-  script.name = revision.name = name;
-  script.latestVersion = revision.version = firstVersion;
-  script.save(function(err){
-    if(err) callback(err);
-    else revision.save(callback);
+  // Check first that the script does not already exist
+  Script.findOne({ name: name }, function(err, script){
+    if(script)
+      callback(new Error("The script name \""+name
+        +"\" is already taken. Please choose another name."));
+    else{
+      var script = new Script(), revision = new Revision();
+      script.name = revision.name = name;
+      script.latestVersion = revision.version = firstVersion;
+      script.save(function(err){
+        if(err) callback(err);
+        else revision.save(callback);
+      });
+    }
   });
 }
 
@@ -239,4 +247,6 @@ module.exports.clearDB = clearDB;
 // disconnect()
 //
 // Disconnects from MongoDB so the Node process can end.
-module.exports.disconnect = mongoose.disconnect;
+module.exports.disconnect = function(){
+  mongoose.disconnect();
+}

@@ -46,20 +46,13 @@ app.get('/scripts/new', function(req, res){
 app.post('/scripts', function(req, res){
   var name = req.body.script.name;
   scripts.insertNew(name, function(err){
-    if(err){
-      if(err.toString().indexOf("File exists") != -1)
-        // TODO change this to AJAX validation
-        // (only show 'Create' button when name is not taken)
-        res.render('scripts/new', {locals:{
-          hasError:true,
-          error:"Oops! The script name \""+name
-               +"\" is already taken. Please choose another name.",
-          name:name}});
-      else
-        res.render('scripts/error', {locals: {error:err}});
-      console.log('"'+err+'"');
-    }
-    else res.redirect('/scripts/'+name+'/'+scripts.FIRST_VERSION);
+    if(err)
+      // TODO change this to AJAX validation
+      // (only show 'Create' button when name is not taken)
+      res.render('scripts/new', {locals:{
+        hasError:true, error:err.message, name:name}});
+    else
+      res.redirect('/scripts/'+name+'/'+scripts.FIRST_VERSION);
   });
 });
 
