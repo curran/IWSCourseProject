@@ -26,6 +26,64 @@ function insertNew(name, callback) {
   });
 }
 
+// checkAllExist(revisions, callback(err,name,version))
+//
+// Checks that all given revisions
+// (objects having 'name' and 'version' properties)
+// correspond to objects which exist in the database.
+// If one of the revisions is not found in the database,
+// the callback is called with an error message and the
+// name and version of the non-existent revision.
+function checkAllExist(revisionsToCheck, callback){
+  revisionsToCheck = revisionsToCheck.slice(0);
+  (function iterate(){
+    if(revisionsToCheck.length == 0)
+      callback();
+    else{
+      revision = revisionsToCheck.splice(0,1)[0];
+      db.findRevision(revision.name, 
+                   revision.version,
+                   function(error, revisionInDB){
+        if(revisionInDB)
+          process.nextTick(iterate);
+        else{
+          callback("version "+revision.version+" of script \""+revision.name+"\" not found.",revision.name,revision.version);
+          return;
+        }
+      });
+    }
+  }());
+}
+
+// validateDependenciesAndTemplate(revision, callback(err))
+//
+// Expects revision.dependencies as an array of revision pointer
+// objects (each with properties 'name' and 'version), and 
+// optionally revision.template as an object with the same properties.
+//
+// Checks that revisions referred to by objects in revision.dependencies
+// and revision.template are revisions in the database.
+function validateDependenciesAndTemplate(revision, callback){
+  checkAllExist(revision.dependencies, function(err, name, version){
+    if(err)
+      callback("Error in line \"@depends on "+name
+        +" "+version+"\" - "+err);
+    else
+      if(revision.template)
+        checkAllExist([revision.template], function(err,name,version){
+          if(err){
+            callback("Error in line \"@embed in "+name
+              +" "+version+"\" - "+err);
+          }
+          else
+            callback(null);
+        });
+      else
+        callback(null);
+  });
+  
+}
+
 function setContent(name, content, message, callback) {
   var revision = {
     name: name,
@@ -36,14 +94,17 @@ function setContent(name, content, message, callback) {
     if(err)
       callback(err);
     else{
-      db.incrementLatestVersion(name, function(err, latestVersion){
-        revision.version = latestVersion;
-        db.saveRevision(revision,function(err){
-          if(err) callback(err);
-          else git.setContent(name, content, function(err){
+      validateDependenciesAndTemplate(revision, function(err){
+        if(err) callback(err);
+        else db.incrementLatestVersion(name, function(err, latestVersion){
+          revision.version = latestVersion;
+          db.saveRevision(revision,function(err){
             if(err) callback(err);
-            else git.tagRepo(name, latestVersion, function(err){
-              callback(err, latestVersion);
+            else git.setContent(name, content, function(err){
+              if(err) callback(err);
+              else git.tagRepo(name, latestVersion, function(err){
+                callback(err, latestVersion);
+              });
             });
           });
         });

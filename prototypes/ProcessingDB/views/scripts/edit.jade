@@ -28,9 +28,11 @@ form(action='/scripts/'+revision.name, method='POST')
             a(href='/scripts/'+d.name+'/'+d.version) #{d.name+' '+d.version}
             - if(i < n-1)
               , 
+        - if(revision.template)
+          , 
       - if(revision.template)
-        | , embedded in 
-        a(href='/scripts/'+d.name+'/'+d.version)
+        | embedded in 
+        a(href='/scripts/'+revision.template.name+'/'+revision.template.version)
           #{revision.template.name+' '+revision.template.version}
     p(style='float:right')
       a(href='/scripts/'+revision.name+'/versions',target='_blank') versions

@@ -4,7 +4,7 @@ var express = require('express'),
 var app = express.createServer();
 
 app.configure(function(){
-  app.use(express.logger());
+  //app.use(express.logger());
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.static(__dirname + '/static'));
@@ -50,7 +50,10 @@ app.post('/scripts', function(req, res){
       // TODO change this to AJAX validation
       // (only show 'Create' button when name is not taken)
       res.render('scripts/new', {locals:{
-        hasError:true, error:err.message, name:name}});
+        hasError:true,
+        error:err.message,
+        name:name
+      }});
     else
       res.redirect('/scripts/'+name+'/'+scripts.FIRST_VERSION);
   });
