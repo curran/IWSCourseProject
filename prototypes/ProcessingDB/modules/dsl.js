@@ -18,22 +18,31 @@
 var parseContent = function(content, callbacks){
   var lines = content.split('\n');
   for(var i = 0; i < lines.length; i++){
-    var line = lines[i];
-    var dependsOn = line.indexOf('@depends') != -1;
+    var line = lines[i].trim();
+    
     //TODO handle errors when:
-    // - syntax error (wrong number of tokens)
-    // - @depends or @embed points to nonexistent revisions
     // - @embed target doesn't contain exactly one '${code}'
+    var dependsOn = line.indexOf('@depends') != -1;
     var embedIn = line.indexOf('@embed') != -1;
     
     if(dependsOn || embedIn){
-      var tokens = line.split(' ');
-      if(tokens.length != 4){
+      // Parse tokens, ignoring extra white space
+      var rawTokens = line.split(' '), tokens = [];
+      for(var j=0;j<rawTokens.length;j++)
+        if(rawTokens[j] != '' && rawTokens[j] != '\n')
+          tokens.push(rawTokens[j]);
+          
+      if(tokens.length != 4
+         || (dependsOn && (tokens[0] != '@depends' || tokens[1] != 'on'))
+         || (embedIn   && (tokens[0] != '@embed'   || tokens[1] != 'in'))){
         if(dependsOn)
-          callbacks.error("Oops! Script not saved - invalid syntax in \""+line+"\". If a script depends on version 0.05 of script A, the syntax should be: \"@depends on A 0.05\"");
+          callbacks.error("Oops! Script not saved - invalid syntax in \""+line
+            +"\". If a script depends on version 0.05 of script A, "
+            +"the syntax should be: \"@depends on A 0.05\"");
         else if(embedIn)
-          callbacks.error("Oops! Script not saved - invalid syntax in \""+line+"\". If a script is embedded into version 0.05 of script A, the syntax should be: \"@embed in A 0.05\"");
-        return;
+          callbacks.error("Oops! Script not saved - invalid syntax in \""+line
+            +"\". If a script is embedded into version 0.05 of script A, "
+            +"the syntax should be: \"@embed in A 0.05\"");
       }
       else{
         var name = tokens[2];

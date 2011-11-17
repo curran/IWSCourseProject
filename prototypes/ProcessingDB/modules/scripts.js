@@ -42,8 +42,8 @@ function checkAllExist(revisionsToCheck, callback){
     else{
       revision = revisionsToCheck.splice(0,1)[0];
       db.findRevision(revision.name, 
-                   revision.version,
-                   function(error, revisionInDB){
+                      revision.version,
+                      function(error, revisionInDB){
         if(revisionInDB)
           process.nextTick(iterate);
         else{
