@@ -65,73 +65,23 @@ function insertNewScript(name, firstVersion, callback){
   });
 }
 
-// Parses the dependencies out of the given script content.
-// callbacks.dependsOn(name, version) is called for each '@depends' occurance.
-// callbacks.embedIn(name, version) is called for each '@embed in' occurance.
-// callbacks.error(err) is called if there is an error.
-function parseContent(content, callbacks){
-  var lines = content.split('\n');
-  for(var i = 0; i < lines.length; i++){
-    var line = lines[i];
-    var dependsOn = line.indexOf('@depends') != -1;
-    //TODO handle errors when:
-    // - syntax error (wrong number of tokens)
-    // - @depends or @embed points to nonexistent revisions
-    // - @embed target doesn't contain exactly one '${code}'
-    var embedIn = line.indexOf('@embed') != -1;
-    
-    if(dependsOn || embedIn){
-      var tokens = line.split(' ');
-      if(tokens.length != 4){
-        if(dependsOn)
-          callbacks.error("Oops! Script not saved - invalid syntax in \""+line+"\". If a script depends on version 0.05 of script A, the syntax should be: \"@depends on A 0.05\"");
-        else if(embedIn)
-          callbacks.error("Oops! Script not saved - invalid syntax in \""+line+"\". If a script is embedded into version 0.05 of script A, the syntax should be: \"@embed in A 0.05\"");
-        return;
-      }
-      else{
-        var name = tokens[2];
-        var version = tokens[3];
-        if(dependsOn)
-          callbacks.dependsOn(name, version);
-        else if(embedIn)
-          callbacks.embedIn(name, version);
-      }
-    }
-  }
-}
+
 
 function saveRevision(revision, callback){
   var revisionInDB = new Revision();
   revisionInDB.name = revision.name;
   revisionInDB.version = revision.version;
   revisionInDB.message = revision.message;
-  var error = null;
-  parseContent(revision.content, {
-    dependsOn: function(name, version){
-      revisionInDB.dependencies.push({
-        name: name, version: version
-      });
-    },
-    embedIn: function(name, version){
-      // TODO report error when multiple '@embed in's are found
-      revisionInDB.template = {
-        name: name, version: version
-      };
-    },
-    error: function(err){
-      error = err;
-    }
-    //TODO parse occurances of '${code}'
-    //TODO report error when '${code}' is present with 
-    //     either '@depends on' or '@embed in'
-  });
-  if(!error){
-    revisionInDB.save(callback);
-  }
-  else{
-    callback(error);
-  }
+  revisionInDB.template = revision.template;
+  
+  for(var i = 0;i<revision.dependencies.length; i++)
+    revisionInDB.dependencies.push(revision.dependencies[i]);
+ 
+  //TODO parse occurances of '${code}'
+  //TODO report error when '${code}' is present with 
+  //     either '@depends on' or '@embed in'
+  
+  revisionInDB.save(callback);
 }
 
 function incrementLatestVersion(name, callback){

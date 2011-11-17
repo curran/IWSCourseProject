@@ -7,7 +7,8 @@
 // Author: Curran Kelleher
 
 var db  = require('./db'),
-    git = require('./git');
+    git = require('./git'),
+    dsl = require('./dsl');
 
 // The version number used as the first version for new scripts.
 // TODO make this into a string
@@ -26,22 +27,30 @@ function insertNew(name, callback) {
 }
 
 function setContent(name, content, message, callback) {
-  db.incrementLatestVersion(name, function(err, latestVersion){
-    db.saveRevision({
-      name: name,
-      content: content,
-      message: message,
-      version: latestVersion
-    },function(err){
-      if(err) callback(err);
-      else git.setContent(name, content, function(err){
-        if(err) callback(err);
-        else git.tagRepo(name, latestVersion, function(err){
-          callback(err, latestVersion);
+  var revision = {
+    name: name,
+    content: content,
+    message: message
+  };
+  dsl.addDependenciesAndTemplate(revision, function(err){
+    if(err)
+      callback(err);
+    else{
+      db.incrementLatestVersion(name, function(err, latestVersion){
+        revision.version = latestVersion;
+        db.saveRevision(revision,function(err){
+          if(err) callback(err);
+          else git.setContent(name, content, function(err){
+            if(err) callback(err);
+            else git.tagRepo(name, latestVersion, function(err){
+              callback(err, latestVersion);
+            });
+          });
         });
       });
-    });
+    }
   });
+  
 };
 
 function findRevisionWithContent(name, version, callback){
