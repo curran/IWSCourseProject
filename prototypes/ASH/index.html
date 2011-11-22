@@ -217,6 +217,9 @@ function sketch(p){
       
       for(i in circles){
         var circle = circles[i];
+        
+        
+        
         p.fill(circle.r,circle.g,circle.b);
         var x = dataToScreenSpaceX(circle.x);
         var y = dataToScreenSpaceY(circle.y);
@@ -243,22 +246,26 @@ function sketch(p){
           p.noStroke();
           p.ellipse(x - ellipseWidth/2,y-ellipseSize/2,ellipseWidth,ellipseSize);
           
-          
           // draw the text in front of the ellipse
           p.fill(0);
           p.textAlign(p.CENTER);
           p.text(circle.text,x,y+textYOffset);
+         
+          p.stroke(0);
+          p.fill(0);
+          //p.line(0,0,100,100);
+          
+          console.log("here x = "+x+",y = "+y);
           
         }
       }
-      
-      
       graphicsDirty = false;
     }
   };
   
   p.mouseClicked = function(){
-    var dataSpaceX = screenToDataSpaceX();
+    
+    var dataSpaceX = screenToDataSpaceX(p.mouseX);
     var dataSpaceY = screenToDataSpaceY(p.mouseY);
     
     var circleUnderPoint = getCircleUnderPoint(p.mouseX, p.mouseY);
@@ -301,6 +308,7 @@ function sketch(p){
             ASH.genResourceId(function(resourceId){
               ASH.begin();
               ASH.set(resourceId,ASH.TYPE,CIRCLE);
+              console.log("dataSpaceX = "+dataSpaceX);
               ASH.set(resourceId,'x',dataSpaceX);
               ASH.set(resourceId,'y',dataSpaceY);
               ASH.set(resourceId,'r',random255());
