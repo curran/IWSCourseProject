@@ -53,6 +53,8 @@ ASH.registerPlugin({
       //the function that sets a value on a 'circle'
       set:function(property,value){
         //assuming 'property' in {x,y,diameter,r,g,b,text}
+        if(property != 'text')
+          value = Number(value);
         circles[resourceId][property] = value;
         graphicsDirty = true;
       },
@@ -100,11 +102,37 @@ ASH.registerPlugin({
   }
 });
 
+function connectionExists(circleA, circleB){
+  for(i in connections){
+    var connection = connections[i];
+    if(connection.circleA === circleA && connection.circleB === circleB)
+      return true;
+    else if(connection.circleA === circleB && connection.circleB === circleA)
+      return true;
+  }
+  return false;
+}
+
 function sketch(p){
   var circleBeingMoved = undefined;
   var circleBeingConnected = undefined;
   
-  var textToStrokeRatio = 0.2;
+  var textToStrokeRatio = 0.05;
+  
+  var minTextSizeWhite = 5;  // min
+  var minTextSizeBlack = 20; // max
+  var maxTextSizeBlack = 100;// min
+  var maxTextSizeWhite = 300;// max
+  
+  
+  function textFill(size){
+    if(size > minTextSizeBlack && size < maxTextSizeBlack)
+      return 0;
+    else if(size > maxTextSizeBlack && size < maxTextSizeWhite)
+      return 255*(size - maxTextSizeBlack)/(maxTextSizeWhite - maxTextSizeBlack);
+    else
+      return 255*(1 - (size - minTextSizeWhite)/(minTextSizeBlack - minTextSizeWhite))
+  }
   
   function getCircleUnderPoint(screenSpaceX, screenSpaceY){
     // get the text bounding box using this example
@@ -205,33 +233,33 @@ function sketch(p){
         var connection = connections[i];
         var a = circles[connection.circleA];
         var b = circles[connection.circleB];
-        //console.log('connection.circleA = '+connection.circleA);
         var x1 = dataToScreenSpaceX(a.x);
         var y1 = dataToScreenSpaceY(a.y);
         var x2 = dataToScreenSpaceX(b.x);
         var y2 = dataToScreenSpaceY(b.y);
-        
-        var avgDiameter = (a.diameter + b.diameter)/2;
-        var strokeWeight = dataToScreenSpace(avgDiameter) * textToStrokeRatio;
-        console.log("A Diameter: " +a.Diameter);        
-        console.log("B Diameter: " +b.Diameter);        
-        console.log("Avg Diameter: " +avgDiameter);
-        console.log("stroke size: " +strokeWeight);        
-//      	p.strokeWeight(strokeWeight);        
-      	p.line(x1,y1,x2,y2);
+       
+        var size = dataToScreenSpace(Math.max(a.diameter, b.diameter));
+        if(size > minTextSizeWhite && size < maxTextSizeWhite){
+          var avgDiameter = (a.diameter + b.diameter)/2;
+          var strokeWeight = dataToScreenSpace(avgDiameter) * textToStrokeRatio;
+        	p.strokeWeight(strokeWeight);
+          p.stroke(textFill(size));
+          p.line(x1,y1,x2,y2);
+        }
       }
       if(circleBeingConnected != undefined){
         var x1 = dataToScreenSpaceX(circleBeingConnected.x);
         var y1 = dataToScreenSpaceY(circleBeingConnected.y);
         var x2 = p.mouseX;
         var y2 = p.mouseY;
+        var strokeWeight = dataToScreenSpace(circleBeingConnected.diameter);
+        strokeWeight *= textToStrokeRatio;
+        p.strokeWeight(strokeWeight);  
         p.line(x1,y1,x2,y2);
       }
       
       for(i in circles){
         var circle = circles[i];
-        
-        
         
         p.fill(circle.r,circle.g,circle.b);
         var x = dataToScreenSpaceX(circle.x);
@@ -239,7 +267,7 @@ function sketch(p){
         
         var size = dataToScreenSpace(circle.diameter);
         
-        if(circle.text && size > 7){
+        if(circle.text && size > minTextSizeWhite && size < maxTextSizeWhite){
           var roundedSize = Math.round(size);
           
           p.textSize(roundedSize);
@@ -260,16 +288,9 @@ function sketch(p){
           p.ellipse(x - ellipseWidth/2,y-ellipseSize/2,ellipseWidth,ellipseSize);
           
           // draw the text in front of the ellipse
-          p.fill(0);
+          p.fill(textFill(size));
           p.textAlign(p.CENTER);
           p.text(circle.text,x,y+textYOffset);
-         
-          p.stroke(0);
-          p.fill(0);
-          //p.line(0,0,100,100);
-          
-          console.log("here x = "+x+",y = "+y);
-          
         }
       }
       graphicsDirty = false;
@@ -289,13 +310,17 @@ function sketch(p){
         circleBeingConnected = null;
       else{
         ASH.genResourceId(function(resourceId){
-          ASH.begin();
-          ASH.set(resourceId,ASH.TYPE,CONNECTION);
-          ASH.set(resourceId,'circleA',circleBeingConnected.resourceId);
-          ASH.set(resourceId,'circleB',circleUnderPoint.resourceId);
-          ASH.commit();
-          graphicsDirty = true;
-          circleBeingConnected = undefined;
+          var circleA = circleBeingConnected.resourceId;
+          var circleB = circleUnderPoint.resourceId;
+          if(!connectionExists(circleA, circleB)){
+            ASH.begin();
+            ASH.set(resourceId,ASH.TYPE,CONNECTION);
+            ASH.set(resourceId,'circleA',circleA);
+            ASH.set(resourceId,'circleB',circleB);
+            ASH.commit();
+            graphicsDirty = true;
+            circleBeingConnected = undefined;
+          }
         });
       }
     }

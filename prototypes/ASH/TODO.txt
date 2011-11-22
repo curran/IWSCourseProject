@@ -1,5 +1,4 @@
 Prathiba and Curran 11/14
 TODO:
- - Solve text memory issues (memory leak)
- - Draw different thicknesses for connections
+ - Make sure graphicsDirty is false when nothing is moving
  - Solve ASH problems
