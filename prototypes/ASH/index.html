@@ -104,6 +104,8 @@ function sketch(p){
   var circleBeingMoved = undefined;
   var circleBeingConnected = undefined;
   
+  var textToStrokeRatio = 0.2;
+  
   function getCircleUnderPoint(screenSpaceX, screenSpaceY){
     // get the text bounding box using this example
     // http://processingjs.org/source/text-width/text-width.html
@@ -119,8 +121,10 @@ function sketch(p){
       var x2 = x1 + width;
       var y2 = y1 + height;
       
-      p.fill(200);
-      p.rect(x1,y1,width,height);
+          
+  // was used to debug the text 
+      //p.fill(200);
+      //p.rect(x1,y1,width,height);
       
       if(screenSpaceX > x1 && screenSpaceX < x2 && 
          screenSpaceY > y1 && screenSpaceY < y2)
@@ -193,6 +197,7 @@ function sketch(p){
     iteratePanZoom();
     if(graphicsDirty){
       p.fill(255);
+      p.noStroke();
       p.rect(0,0,p.width, p.height);
       
       p.stroke(0);
@@ -205,7 +210,15 @@ function sketch(p){
         var y1 = dataToScreenSpaceY(a.y);
         var x2 = dataToScreenSpaceX(b.x);
         var y2 = dataToScreenSpaceY(b.y);
-        p.line(x1,y1,x2,y2);
+        
+        var avgDiameter = (a.diameter + b.diameter)/2;
+        var strokeWeight = dataToScreenSpace(avgDiameter) * textToStrokeRatio;
+        console.log("A Diameter: " +a.Diameter);        
+        console.log("B Diameter: " +b.Diameter);        
+        console.log("Avg Diameter: " +avgDiameter);
+        console.log("stroke size: " +strokeWeight);        
+//      	p.strokeWeight(strokeWeight);        
+      	p.line(x1,y1,x2,y2);
       }
       if(circleBeingConnected != undefined){
         var x1 = dataToScreenSpaceX(circleBeingConnected.x);
