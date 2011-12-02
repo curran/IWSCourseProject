@@ -2,6 +2,8 @@
 
 ASH is a framework for realtime Javascript application synchronization. This means that with ASH, you can develop apps whose running instances can be shared by many people at once - when one person makes a change, that change is broadcast to all other users, maintaining synchronized application states across multi-platform clients (desktops, smartphones, tablets).
 
+ASH has two parts, the client library and the server. The ASH server is written in Javascript using Node.js and Express, and the client is a Javascript library. Both sides depend on the [Socket.io Node module](http://socket.io/ "Socket.io") for communication.
+
 ## Public API
 On the single exported global variable `ASH`, there are the following methods:
 ### registerPlugin(plugin)
