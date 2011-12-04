@@ -1,20 +1,20 @@
-var app = require('http').createServer(handler)
-    , io = require('socket.io').listen(app)
-    , fs = require('fs');
+var fs = require('fs')
+  , express = require('express')
+  , app = express.createServer()
+  , io = require('socket.io').listen(app);
 
-app.listen(8004);
+app.configure(function(){
+  app.use(express.static(__dirname + '/static'));
+});
 
-function handler (req, res) {
-  //TODO use one of the static file serving packages,
-  //this code doesn't use the right MIME types
-  var filePath = '.' + req.url;
-  if (filePath == './')
-    filePath = './index.html';
+app.get('/:sessionName', function(req, res){
+  var filePath = './static/index.html';
   fs.readFile(filePath, function(error, content) {
     res.writeHead(200);
     res.end(content, 'utf-8') ;
   });
-}
+  //TODO use sessionName to look up different sessions
+});
 
 var actions = [];// a sequence of actions for this session
 var sockets = [];// the list of open WebSockets to clients
@@ -46,7 +46,6 @@ function storeAction(actionString){
         previousAction.property == action.property ){
       if(action.isSet && previousAction.isSet){
         // collapse [set a=5, set a=6] to [set a=6]
-        console.log("replacing '"+actions[i]+"' with '"+actionString+"'");
         actions[i] = actionString;
         return;
       }
@@ -92,3 +91,5 @@ io.sockets.on('connection', function (socket) {
     });
   });
 });
+
+app.listen(8004);
