@@ -26,9 +26,22 @@ Concepts:
    - do: An ASH transaction which when executed mutates an ASH model at session state u to session state v.
    - undo: An ASH transaction which when executed mutates an ASH model at session state v to session state u.
 
+When all of these concepts are implemented, ASH will be able to manage state for arbitrary Javascript applications, providing the following features:
+
+ - Synchronous collaboration: Many clients synchronized in real time.
+ - Asynchronous collaboration: Publication of session states to the Web for
+   - embedding within Web pages,
+   - execution as full screen apps,
+   - providing a starting point for future synchronous collaboration sessions.
+ - Session history navigation: Undo, Redo, and navigation to any state in the session history graph.
+
+ASH is currently a work in progress, only synchronous collaboration is implemented. However, applications written to the current ASH API will gain the the additional features transparently as ASH is developed further (requiring no code modification).
+
 ## Public API
 The ASH client library exports a single global variable `ASH`, which exposes the following methods:
 ### registerPlugin(plugin)
+Registers an ASH plugin with the ASH runtime.
+
 Args:
 
  - `plugin` An object expected to contain the following members:
