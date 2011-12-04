@@ -1,6 +1,6 @@
 # Application State Historian (ASH)
 
-ASH is a framework for realtime Javascript application synchronization. This means that with ASH, you can develop apps whose running instances can be shared by many people at once - when one person makes a change, that change is broadcast to all other users, maintaining synchronized application states across multi-platform clients (desktops, smartphones, tablets).
+ASH is a framework for real time Javascript application synchronization. This means that with ASH, you can develop HTML5 apps whose running instances can be shared by many people at once - when one person makes a change, that change is broadcast to all other users, maintaining synchronized application states across multi-platform clients (desktops, smartphones and tablets).
 
 ASH has two parts, the client library and the server. The ASH server is written in Javascript using the [Node.js](http://nodejs.org/) server side Javascript runtime and the [Express](http://expressjs.com/) Web framework. The client is a Javascript library intended for use by HTML5 applications. Both sides depend on the [Socket.io Node module](http://socket.io/ "Socket.io") for realtime communication.
 
@@ -35,11 +35,11 @@ When all of these concepts are implemented, ASH will be able to manage state for
    - providing a starting point for future synchronous collaboration sessions.
  - Session history navigation: Undo, Redo, and navigation to any state in the session history graph.
 
-ASH is currently a work in progress, only synchronous collaboration is implemented. However, applications written to the current ASH API will gain the the additional features transparently as ASH is developed further (requiring no code modification).
+ASH is work in progress - only synchronous collaboration is implemented. However, applications written to the current ASH API will gain the the additional features transparently as ASH is developed further (requiring no code modification).
 
 ## Public API
 The ASH client library exports a single global variable `ASH`, which exposes the following methods:
-### registerPlugin(plugin)
+### ASH.registerPlugin(plugin)
 Registers an ASH plugin with the ASH runtime.
 
 Args:
@@ -51,17 +51,25 @@ Args:
      - `unset(property)` Unsets the given property (a String) on this resource.
    - `delete(resourceId)` A method for deleting previously created resources (really deleting, i.e. freeing memory).
 
-### genResourceId(callback)
+### ASH.genResourceId(callback)
 Generates a new unique ASH resource Id (a String). 
 
 Args:
 
  - `callback` A callback function called with the resource Id as a single argument. In some cases Id generation will require a round trip to the ASH server, in which case the callback is called asynchronously, but most of the time it will be called right away. This is because when each client connects to the ASH server it requests a range of integers it can use for new resource Ids. When a client uses all resource Ids in its assigned range, it requests a new range of Ids from the server (the asynchronous case).
 
-### set(resource,property,value)
+### ASH.begin()
+Begins an ASH transaction. Subsequent calls to ASH.set and ASH.unset will be grouped together into an ASH transaction until ASH.end() is called.
+
+### ASH.end()
+Ends an ASH transaction. If the application is part of a synchronous collaboration session, the transaction is broadcast to other clients when ASH.end() is called.
+
+### ASH.set(resource,property,value)
+Sets the given property of the given resource to the given value in the ASH model.
+
 Args:
 
- - `resource` A string resource Id
+ - `resource` A resource Id
  - `property` A string property Id.
  - `value` A string value.
 
@@ -69,7 +77,9 @@ If `property` is `ASH.TYPE`, then `value` is interpreted to be a type Id (as def
 
 If `property` is not `ASH.TYPE`, it is assumed that the property `ASH.TYPE` has been previously set, and ASH will set the property on the existing resource (meaning it will call `set()` on the object returned previously from `plugin.create()`).
 
-### unset(resource,property)
+### ASH.unset(resource,property)
+Unsets the given property of the given resource.
+
 Args:
  - `resource` A string resource Id
  - `property` A string property Id.
@@ -78,25 +88,5 @@ If `property` is `ASH.TYPE`, then unsetting this property causes ASH to invoke `
 
 If `property` is not `ASH.TYPE`, ASH will unset the property on the resource (meaning it will call `unset()` on the object returned previously from `plugin.create()`).
 
-### TYPE
-The property ID used for the type property.
-
-## Private API
-Documentation and explaination of the inner workings of ASH.
-### Private variables in the ASH singleton:
- - `resourceIdCounter` A counter used by `genResourceId()`
- - `plugins` The plugins registered with ASH. A map where keys are resource Ids (strings) and values are the objects passed into `registerPlugin(plugin)`
- - `resourceTypes` A resource type lookup table, can answer 'Which type is resource X?'. A map where keys are resource Ids (strings) and values are resource type Ids (strings).
- - `resources` The resources in the current ASH state.
-### Concepts
- - "The ASH State" or a given ASH singleton at runtime is the current state of that ASH singleton, defined by what sequence of atomic actions have been performed.
-
-
-
-New additions and changes in this version:
-
-Action sequences on the server are collapsed:
- - [set a=5, set a=6] is collapsed to [set a=6]
- - [set a=5, unset a] is collapsed to []
- 
- This means that when an ASH client is initialized to the state of the shared session, only the necessary actions to achieve the final state are sent from the server, cutting down tremendously on the size of the initialization message. Previously, for example, every drag of a circle was recorded to the server and sent to each client for initialization. After implementing this, only the final coordinates of dragged circles are sent.
+### ASH.TYPE
+The constant property ID used for the type property.
