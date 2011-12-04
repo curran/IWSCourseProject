@@ -8,8 +8,9 @@ ASH has two parts, the client library and the server. The ASH server is written 
 In the Model View Controller paradigm, ASH is responsible for managing the Model. Applications which use ASH must always go through the ASH API to make any changes to their Model. This is how full application model synchronization can occur.
 
 Concepts:
- - ASH session state - A set of ASH resources. This serves as the full application state model.
- - ASH resource - An instance of an object type provided by an ASH plugin. Each resource has an ID, a type, and can have named properties assigned to it.
+
+ - ASH session state: A set of ASH resources. This serves as the full application state model.
+ - ASH resource: An instance of an object type provided by an ASH plugin. Each resource has an ID, a type, and can have named properties assigned to it.
  - ASH plugin - An object which is responsible for managing the lifecycle of ASH resources of one particular type. ASH plugins must be registered with the ASH runtime. After a plugin is registered, it can be accessed through the ASH API within ASH transactions.
  - ASH transaction - An ordered list of ASH actions which are to be executed together atomically.
  - ASH action - A manipulation of the ASH session state. ASH actions have the following forms:
@@ -22,7 +23,7 @@ Concepts:
 The ASH client library exports a single global variable `ASH`, which exposes the following methods:
 ### registerPlugin(plugin)
 Args:
-- `plugin` An object expected to contain the following members:
+ - `plugin` An object expected to contain the following members:
     - `type` A string Id of the resource type provided by this plugin.
     - `create(resourceId)` A factory method for creating resource instances. This function takes one argument, the Id of the resource being created. This function should have a side effect of creating a resource managed by the plugin, and should also return an object containing the following members:
         - `set(property,value)` Sets the given property to the given value on this resource.
@@ -61,7 +62,6 @@ Documentation and explaination of the inner workings of ASH.
  - `plugins` The plugins registered with ASH. A map where keys are resource Ids (strings) and values are the objects passed into `registerPlugin(plugin)`
  - `resourceTypes` A resource type lookup table, can answer 'Which type is resource X?'. A map where keys are resource Ids (strings) and values are resource type Ids (strings).
  - `resources` The resources in the current ASH state.
- - 
 ### Concepts
  - "The ASH State" or a given ASH singleton at runtime is the current state of that ASH singleton, defined by what sequence of atomic actions have been performed.
 
