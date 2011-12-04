@@ -30,18 +30,24 @@ Concepts:
 The ASH client library exports a single global variable `ASH`, which exposes the following methods:
 ### registerPlugin(plugin)
 Args:
- - `plugin` An object expected to contain the following members:
-    - `type` A string Id of the ASH resource type provided by this plugin.
-    - `create(resourceId)` A factory method for creating resource instances. This function takes one argument, the Id of the resource being created. This function should have a side effect of creating a resource managed by the plugin, and should return an object containing the following members:
-      - `set(property,value)` Sets the given property (a String) to the given value (also a String) on this resource.
-      - `unset(property)` Unsets the given property (a String) on this resource.
-    - `delete(resourceId)` A method for deleting previously created resources (really deleting, i.e. freeing memory).
 
-### genResourceId()
-Generates and returns a unique (string) resource Id.
+ - `plugin` An object expected to contain the following members:
+   - `type` A string Id of the ASH resource type provided by this plugin.
+   - `create(resourceId)` A factory method for creating ASH resources. This function takes one argument, the Id of the resource being created. This function should have a side effect of creating a resource managed by the plugin, and should return an object containing the following members:
+     - `set(property,value)` Sets the given property (a String) to the given value (also a String) on this resource.
+     - `unset(property)` Unsets the given property (a String) on this resource.
+   - `delete(resourceId)` A method for deleting previously created resources (really deleting, i.e. freeing memory).
+
+### genResourceId(callback)
+Generates a new unique ASH resource Id (a String). 
+
+Args:
+
+ - `callback` A callback function called with the resource Id as a single argument. In some cases Id generation will require a round trip to the ASH server, in which case the callback is called asynchronously, but most of the time it will be called right away. This is because when each client connects to the ASH server it requests a range of integers it can use for new resource Ids. When a client uses all resource Ids in its assigned range, it requests a new range of Ids from the server (the asynchronous case).
 
 ### set(resource,property,value)
 Args:
+
  - `resource` A string resource Id
  - `property` A string property Id.
  - `value` A string value.
