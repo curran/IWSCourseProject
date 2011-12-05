@@ -5,9 +5,8 @@ A group project for the course "Internet and Web Systems" at University of Massa
    - Both examples have the following features:
      - The URLs for accessing the applications are of the form `applicationName/sessionName`.
        - You can enter your own session name to create new sessions.
-     - Each application URL defines a shared session.
-       - Everyone with the same URL loaded sees the same thing
-       - Updates occur in real time
+       - Everyone with the same URL loaded sees the same thing.
+       - Updates occur in real time.
    - Colored Circles - [code](https://github.com/curran/IWSCourseProject/blob/master/ASH/static/examples/ColoredCircles.html) - [demo](http://universalvisualization.org:8000/ColoredCircles/test) - A basic application demonstrating the capabilities of ASH.
      - Click on empty space to create a randomly colored circle.
      - Click on a circle to delete it.
