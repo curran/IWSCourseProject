@@ -73,14 +73,11 @@ Args:
 
  - `callback` A callback function called with the resource Id as a single argument. In some cases Id generation will require a round trip to the ASH server, in which case the callback is called asynchronously, but most of the time it will be called right away. This is because when each client connects to the ASH server it requests a range of integers it can use for new resource Ids. When a client uses all resource Ids in its assigned range, it requests a new range of Ids from the server (the asynchronous case).
 
-### ASH.begin()
-Begins an ASH transaction. Subsequent calls to ASH.set and ASH.unset will be grouped together into an ASH transaction until ASH.end() is called.
-
-### ASH.end()
-Ends an ASH transaction. If the application is part of a synchronous collaboration session, the transaction is broadcast to other clients when ASH.end() is called.
+### ASH.begin() and ASH.end()
+Calling `ASH.begin()` begins an ASH transaction. Subsequent calls to `ASH.set` and `ASH.unset` will be grouped together into an ASH transaction until `ASH.end()` is called, which ends an ASH transaction. If the application is part of a synchronous collaboration session, the transaction actions are broadcast to other clients when `ASH.end()` is called.
 
 ### ASH.set(resource,property,value)
-Sets the given property of the given resource to the given value in the ASH model.
+Sets the given property of the given resource to the given value in the ASH model. This must be called within an ASH transaction (after `ASH.begin()` and before `ASH.end()`).
 
 Args:
 
