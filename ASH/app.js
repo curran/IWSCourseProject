@@ -10,7 +10,7 @@ app.configure(function(){
 
 app.get('/:scriptName/:sessionName', function(req, res){
   var filePath = './static/examples/'+req.params.scriptName+'.html';
-  var sessionName = req.params.sessionName;
+  var sessionName = req.params.scriptName+'/'+req.params.sessionName;
   var inFileStream = fs.createReadStream(filePath, { 'bufferSize': 1  });
   inFileStream.on('close', function () {
     res.end();
