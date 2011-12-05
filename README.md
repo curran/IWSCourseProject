@@ -1,18 +1,18 @@
 A group project for the course "Internet and Web Systems" at University of Massachusetts Lowell Fall 2011.
 
  - [Application State Historian (ASH)](https://github.com/curran/IWSCourseProject/tree/master/ASH) - Our client-server JavaScript application synchronization framework. Includes information on how to run the server with examples.
- - [Live demos in the cloud](http://universalvisualization.org:8000/) - Two example ASH applications.
+ - Live demos in the cloud - Two example ASH applications.
    - Both examples have the following features:
      - The URLs for accessing the applications are of the form `applicationName/sessionName`.
        - You can enter your own session name to create new sessions.
      - Each application URL defines a shared session.
        - Everyone with the same URL loaded sees the same thing
        - Updates occur in real time
-   - Colored Circles - A basic application demonstrating the capabilities of ASH.
+   - Colored Circles - [code](https://github.com/curran/IWSCourseProject/blob/master/ASH/static/examples/ColoredCircles.html) - [demo](http://universalvisualization.org:8000/ColoredCircles/test) - A basic application demonstrating the capabilities of ASH.
      - Click on empty space to create a randomly colored circle.
      - Click on a circle to delete it.
      - Click and drag a circle to move it.
-   - Infinite Paper - An infinitely zoomable canvas for arranging multi-scale text labels with connections.
+   - Infinite Paper - [code](https://github.com/curran/IWSCourseProject/blob/master/ASH/static/examples/InfinitePaper.html) - [demo](http://universalvisualization.org:8000/InfinitePaper/test) - An infinitely zoomable canvas for arranging multi-scale text labels with connections.
      - Click on empty space to create a new text label. You will be prompted to enter text.
      - Right click on a text label to delete it.
      - Use the arrow keys for panning.
