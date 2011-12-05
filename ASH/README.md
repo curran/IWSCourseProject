@@ -93,7 +93,8 @@ If `property` is not `ASH.TYPE`, it is assumed that the property `ASH.TYPE` has 
 Unsets the given property of the given resource.
 
 Args:
- - `resource` A string resource Id
+
+- `resource` A string resource Id
  - `property` A string property Id.
 
 If `property` is `ASH.TYPE`, then unsetting this property causes ASH to invoke `plugin.delete(resourceId)` on the plugin corresponding to the type of `resource`, deleting the resource.
