@@ -53,7 +53,7 @@ When all of these concepts are implemented, ASH will be able to manage state for
 ASH is work in progress - only synchronous collaboration is implemented. However, applications written to the current ASH API will gain the the additional features transparently as ASH is developed further (requiring no code modification).
 
 ## Public API
-The ASH client library exports a single global variable `ASH`, which exposes the following methods:
+The [ASH client library](https://github.com/curran/IWSCourseProject/blob/master/ASH/static/js/ash.js) exports a single global variable `ASH`, which exposes the following methods:
 ### ASH.registerPlugin(plugin)
 Registers an ASH plugin with the ASH runtime.
 
