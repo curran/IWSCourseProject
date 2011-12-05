@@ -4,6 +4,20 @@ ASH is a framework for real time Javascript application synchronization. This me
 
 ASH has two parts, the client library and the server. The ASH server is written in Javascript using the [Node.js](http://nodejs.org/) server side Javascript runtime and the [Express](http://expressjs.com/) Web framework. The client is a Javascript library intended for use by HTML5 applications. Both sides depend on the [Socket.io Node module](http://socket.io/ "Socket.io") for realtime communication.
 
+## Running the examples
+
+To run the ASH server and serve several example applications found in the static/examples directory, do the following:
+
+ - Install Node.js
+ - Use NPM to install the following Node packages:
+   - socket.io
+   - express
+ - Get the code:
+   - git clone git://github.com/curran/IWSCourseProject.git
+   - cd IWSCourseProject/ASH
+ - Run the server:
+   - node app.js
+
 ## Architecture
 In the Model View Controller paradigm, ASH is responsible for managing the Model. Applications which use ASH must always go through the ASH API to make any changes to their Model. This is how ASH can accomplish full application model management.
 
