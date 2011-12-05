@@ -8,8 +8,8 @@ ASH has two parts, the [client library](https://github.com/curran/IWSCourseProje
 
 To run the ASH server and serve several example applications found in the static/examples directory, do the following:
 
- 1. Install Node.js
- 2. Use NPM to install the following Node packages:
+ 1. [Install Node.js](https://github.com/joyent/node/wiki/Installation)
+ 2. [Install NPM](http://npmjs.org/) and use it to install required packages with the following command:
    - `npm install express socket.io lazy`
  3. Get the code:
    - `git clone git://github.com/curran/IWSCourseProject.git`
