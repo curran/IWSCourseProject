@@ -136,6 +136,9 @@ var ASH = (function() {
       else
         console.error("ASH.commit() called without a matching ASH.begin(). This should never happen. To perform an ASH transaction, call ASH.begin(), do your (non-asynchronous!) stuff, then call ASH.commit(). There is not yet support for nested transactions.");
     },
-    TYPE : "type"
+    TYPE : "type",
+    joinSession: function(sessionName){
+      socket.emit('joinSession', sessionName);
+    }
   };
 })();
