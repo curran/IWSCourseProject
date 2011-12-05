@@ -17,6 +17,8 @@ To run the ASH server and serve several example applications found in the static
    - cd IWSCourseProject/ASH
  - Run the server:
    - node app.js
+ - Access the example applications:
+   - http://localhost:8080/
 
 ## Architecture
 In the Model View Controller paradigm, ASH is responsible for managing the Model. Applications which use ASH must always go through the ASH API to make any changes to their Model. This is how ASH can accomplish full application model management.
