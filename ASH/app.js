@@ -118,6 +118,3 @@ io.sockets.on('connection', function (socket) {
 var port = 8000;
 app.listen(port);
 console.log("ASH server now running at http://localhost:"+port);
-console.log("Demos:");
-console.log(" Colored Circles running at http://localhost:"+port+"/ColoredCircles.html");
-console.log(" Infinite Paper  running at http://localhost:"+port+"/InfinitePaper.html");
