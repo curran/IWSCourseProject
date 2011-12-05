@@ -1,7 +1,7 @@
 A group project for the course "Internet and Web Systems" at University of Massachusetts Lowell Fall 2011.
 
  - [Application State Historian (ASH)](https://github.com/curran/IWSCourseProject/tree/master/ASH) - Our client-server JavaScript application synchronization framework. Includes information on how to run the server with examples.
- - Live demos in the cloud - Two example ASH applications.
+ - [Live demos in the cloud](http://universalvisualization.org:8000/) - Two example ASH applications.
    - Both examples have the following features:
      - The URLs for accessing the applications are of the form `applicationName/sessionName`.
        - You can enter your own session name to create new sessions.
