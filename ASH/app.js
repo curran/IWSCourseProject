@@ -7,8 +7,8 @@ app.configure(function(){
   app.use(express.static(__dirname + '/static'));
 });
 
-app.get('/:sessionName', function(req, res){
-  var filePath = './static/index.html';
+app.get('/:scriptName/:sessionName', function(req, res){
+  var filePath = './static/examples/'+req.params.scriptName+'.html';
   fs.readFile(filePath, function(error, content) {
     res.writeHead(200);
     res.end(content, 'utf-8') ;
@@ -93,3 +93,7 @@ io.sockets.on('connection', function (socket) {
 });
 
 app.listen(8080);
+console.log("ASH server now running at http://localhost:8080");
+console.log("Demos:");
+console.log(" Colored Circles running at http://localhost:8080/ColoredCircles.html");
+console.log(" Infinite Paper  running at http://localhost:8080/InfinitePaper.html");
