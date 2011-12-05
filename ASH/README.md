@@ -8,16 +8,15 @@ ASH has two parts, the client library and the server. The ASH server is written 
 
 To run the ASH server and serve several example applications found in the static/examples directory, do the following:
 
- - Install Node.js
- - Use NPM to install the following Node packages:
-   - socket.io
-   - express
- - Get the code:
-   - git clone git://github.com/curran/IWSCourseProject.git
-   - cd IWSCourseProject/ASH
- - Run the server:
-   - node app.js
- - Access the example applications:
+ 1 Install Node.js
+ 2 Use NPM to install the following Node packages:
+   - `npm install express socket.io lazy`
+ 3 Get the code:
+   - `git clone git://github.com/curran/IWSCourseProject.git`
+   - `cd IWSCourseProject/ASH`
+ 4 Run the server:
+   - `node app.js`
+ 5 Access the example applications:
    - http://localhost:8080/
 
 ## Architecture
