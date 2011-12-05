@@ -115,9 +115,9 @@ io.sockets.on('connection', function (socket) {
     });
   });
 });
-
-app.listen(8080);
-console.log("ASH server now running at http://localhost:8080");
+var port = 8000;
+app.listen(port);
+console.log("ASH server now running at http://localhost:"+port);
 console.log("Demos:");
-console.log(" Colored Circles running at http://localhost:8080/ColoredCircles.html");
-console.log(" Infinite Paper  running at http://localhost:8080/InfinitePaper.html");
+console.log(" Colored Circles running at http://localhost:"+port+"/ColoredCircles.html");
+console.log(" Infinite Paper  running at http://localhost:"+port+"/InfinitePaper.html");
