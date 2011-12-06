@@ -28,7 +28,7 @@ var CONNECTION = "Connection";
 
 // default coordinates and colors for new labels
 var defaults = { 
-  'x' : 5, 'y' : 10, 'diameter':30,
+  'x' : 5, 'y' : 10, 'size':30,
   'r' : 0, 'g' : 0, 'b' : 0 ,
   'text':''
 }
@@ -43,7 +43,7 @@ var labels = {};
 var connections = {};
 
 // The screen space diamater (in pixels) given to new labels.
-var defaultDiameterOnScreen = 30;
+var defaultSizeOnScreen = 30;
 
 var viewMinX, viewMaxX, viewMinY, viewMaxY;
 var goingRight=false, goingLeft=false, goingIn=false, goingOut=false, goingUp=false, goingDown=false;
@@ -62,9 +62,9 @@ ASH.registerPlugin({
     
     labels[resourceId] = label;
     return {
-      //the function that sets a value on a 'label'
+      // the function that sets a value on a 'label'
       set:function(property,value){
-        //assuming 'property' in {x,y,diameter,r,g,b,text}
+        //assuming 'property' in {x,y,size,r,g,b,text}
         if(property != 'text')
           value = Number(value);
         labels[resourceId][property] = value;
@@ -152,7 +152,7 @@ function sketch(p){
     for(i in labels){
      
       var label = labels[i];
-      var height = dataToScreenSpace(label.diameter);
+      var height = dataToScreenSpace(label.size);
       var roundedSize = Math.round(height);
       p.textSize(roundedSize);
       var width = Number(p.textWidth(label.text));
@@ -250,10 +250,10 @@ function sketch(p){
         var x2 = dataToScreenSpaceX(b.x);
         var y2 = dataToScreenSpaceY(b.y);
        
-        var size = dataToScreenSpace(Math.max(a.diameter, b.diameter));
+        var size = dataToScreenSpace(Math.max(a.size, b.size));
         if(size > minTextSizeWhite && size < maxTextSizeWhite){
-          var avgDiameter = (a.diameter + b.diameter)/2;
-          var strokeWeight = dataToScreenSpace(avgDiameter) * textToStrokeRatio;
+          var avgSize = (a.size + b.size)/2;
+          var strokeWeight = dataToScreenSpace(avgSize) * textToStrokeRatio;
         	p.strokeWeight(strokeWeight);
           p.stroke(textFill(size));
           p.line(x1,y1,x2,y2);
@@ -264,7 +264,7 @@ function sketch(p){
         var y1 = dataToScreenSpaceY(labelBeingConnected.y);
         var x2 = p.mouseX;
         var y2 = p.mouseY;
-        var strokeWeight = dataToScreenSpace(labelBeingConnected.diameter);
+        var strokeWeight = dataToScreenSpace(labelBeingConnected.size);
         strokeWeight *= textToStrokeRatio;
         p.strokeWeight(strokeWeight); 
         p.stroke(0); 
@@ -278,7 +278,7 @@ function sketch(p){
         var x = dataToScreenSpaceX(label.x);
         var y = dataToScreenSpaceY(label.y);
         
-        var size = dataToScreenSpace(label.diameter);
+        var size = dataToScreenSpace(label.size);
         
         if(label.text && size > minTextSizeWhite && size < maxTextSizeWhite){
           var roundedSize = Math.round(size);
@@ -364,8 +364,8 @@ function sketch(p){
               ASH.set(resourceId,'r',random255());
               ASH.set(resourceId,'g',random255());
               ASH.set(resourceId,'b',random255());
-              ASH.set(resourceId,'diameter',
-                screenToDataSpace(defaultDiameterOnScreen));
+              ASH.set(resourceId,'size',
+                screenToDataSpace(defaultSizeOnScreen));
               ASH.set(resourceId,'text',text);
               ASH.commit();
               graphicsDirty = true;
