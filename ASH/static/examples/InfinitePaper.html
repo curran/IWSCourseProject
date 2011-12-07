@@ -13,44 +13,93 @@
         id="pjs">
 </canvas>
 <script type="application/javascript">
-
 function resize(){
   processing.size(window.innerWidth,window.innerHeight);
 }    
-function touchStart(e){ console.log("touchStart"); }
-function touchMove(e){ console.log("touchMove"); }
-function touchEnd(e){ console.log("touchEnd"); }
-function orientationChange(){ resize(); }
-
+var pinch = undefined;
+function copyTouch(touch){
+  return {
+    pageX:touch.pageX,
+    pageY:touch.pageY,
+    identifier:touch.identifier
+  };
+}
+function touchStart(e){
+  if(e.touches.length == 2){
+    pinch = {
+      a:copyTouch(e.touches[0]), b:copyTouch(e.touches[1]),
+      centerX: (viewMinX + viewMaxX)/2, spanX:viewMaxX - viewMinX,
+      centerY: (viewMinY + viewMaxY)/2, spanY:viewMaxY - viewMinY,
+/*
+      viewMinX: viewMinX, viewMaxX: viewMaxX,
+      viewMinY: viewMinY, viewMaxY: viewMaxY
+*/
+    }
+  }
+}
+function touchMove(e){
+  if(pinch){
+    var a1 = pinch.a, b1 = pinch.b, a2, b2, i;
+    for(i=0;i<e.touches.length;i++)
+      if(e.touches[i].identifier == a1.identifier)
+        a2 = e.touches[i];
+      else if(e.touches[i].identifier == b1.identifier)
+        b2 = e.touches[i];
+    if(a2 && b2){
+      var x1 = (a1.pageX + b1.pageX)/2;
+      var x2 = (a2.pageX + b2.pageX)/2;
+      var dx = x1 - x2;
+      var y1 = (a1.pageY + b1.pageY)/2;
+      var y2 = (a2.pageY + b2.pageY)/2;
+      var dy = y1 - y2;
+      var initialTouchDistance = Math.sqrt(
+        Math.pow(b1.pageX-a1.pageX,2) +
+        Math.pow(b1.pageY-a1.pageY,2)
+      );
+      var finalTouchDistance = Math.sqrt(
+        Math.pow(b2.pageX-a2.pageX,2) +
+        Math.pow(b2.pageY-a2.pageY,2)
+      );
+      var dz = initialTouchDistance/finalTouchDistance;
+      var centerX = pinch.centerX + dx;
+      var centerY = pinch.centerY + dy;
+      var spanX = pinch.spanX * dz;
+      var spanY = pinch.spanY * dz;
+      viewMinX = centerX - spanX/2
+      viewMaxX = centerX + spanX/2
+      viewMinY = centerY - spanY/2
+      viewMaxY = centerY + spanY/2
+    }
+  }
+}
+function touchEnd(e){
+  //console.log("touchEnd");
+}
+function orientationChange(){
+  resize();
+}
 // The ID for the Label and Connection ASH resource types
 var LABEL = "Label";
 var CONNECTION = "Connection";
-
+var PANZOOM = "PanZoom";
 // default coordinates and colors for new labels
 var defaults = {
   'x' : 5, 'y' : 10, 'size':30,
   'r' : 0, 'g' : 0, 'b' : 0 ,
   'text':''
 }
-
 // a flag to signal redrawing
 var graphicsDirty = true;
-
 // the list of label objects managed by the plugin,
 // each corresponding to an ASH resource of type LABEL
 var labels = {};
-
 var connections = {};
-
 // The screen space diamater (in pixels) given to new labels.
 var defaultSizeOnScreen = 30;
-
-var viewMinX, viewMaxX, viewMinY, viewMaxY;
+var viewMinX, viewMaxX, viewMinY, viewMaxY, panZoomResourceId = undefined;
 var goingRight=false, goingLeft=false, goingIn=false, goingOut=false, goingUp=false, goingDown=false;
 var dx=0, dy=0, dz=0, acceleration = 0.005, dampening = 0.9;
-
 ASH.joinSession("$sessionName");
-
 //Set up the ASH example plugin for Labels
 ASH.registerPlugin({
   type: LABEL,
@@ -88,7 +137,6 @@ ASH.registerPlugin({
     graphicsDirty = true;
   }
 });
-
 ASH.registerPlugin({
   type: CONNECTION,
   // the function that creates a resource,
@@ -113,7 +161,25 @@ ASH.registerPlugin({
     graphicsDirty = true;
   }
 });
-
+ASH.registerPlugin({
+  type: PANZOOM,
+  create: function(resourceId){
+    return {
+      set:function(property,value){
+        //assuming 'property' in {viewMinX,viewMaxX,viewMinY,viewMaxY}
+        //if(property === 'viewMinX') viewMinX = value;
+        //if(property === 'viewMaxX') viewMaxX = value;
+        //if(property === 'viewMinY') viewMinY = value;
+        //if(property === 'viewMaxY') viewMaxY = value;
+        //graphicsDirty = true;
+      },
+      unset:function(property){
+      }
+    };
+  },
+  delete:function(resourceId){
+  }
+});
 function connectionExists(labelA, labelB){
   for(i in connections){
     var connection = connections[i];
@@ -124,7 +190,6 @@ function connectionExists(labelA, labelB){
   }
   return false;
 }
-
 function sketch(p){
   var labelBeingMoved = undefined;
   var labelBeingConnected = undefined;
@@ -207,6 +272,16 @@ function sketch(p){
   
   p.setup = function(){
     p.background(255);
+    ASH.genResourceId(function(resourceId){
+      panZoomResourceId = resourceId;
+      ASH.begin();
+      ASH.set(resourceId,ASH.TYPE,PANZOOM);
+      ASH.set(resourceId,'viewMinX',viewMinX);
+      ASH.set(resourceId,'viewMaxX',viewMaxX);
+      ASH.set(resourceId,'viewMinY',viewMinY);
+      ASH.set(resourceId,'viewMaxY',viewMaxY);
+      ASH.commit();
+    });
   };
   
   function screenToDataSpaceX(screenSpaceX){
@@ -413,7 +488,6 @@ function sketch(p){
 var canvas = document.getElementById("pjs");  
 var p = new Processing(canvas, sketch);
 p.size(window.innerWidth, window.innerHeight);
-
 // set the view region for panning and zooming
 viewMinX = viewMinY = 0;
 viewMaxX = window.innerWidth;
@@ -421,3 +495,4 @@ viewMaxY = window.innerHeight;
 </script>
 </body>
 </html>
+
