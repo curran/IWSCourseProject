@@ -49,7 +49,7 @@ var ASH = (function() {
     for(i in callbacksToCall)
       ASH.genResourceId(callbacksToCall[i]);
     
-    for(i in data) console.log("  "+i+":"+data[i]);
+    //for(i in data) console.log("  "+i+":"+data[i]);
   });
   
   var resourceIdMin = -1; // assigned by the server
