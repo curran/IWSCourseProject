@@ -85,6 +85,7 @@ io.sockets.on('connection', function (socket) {
     
     //initialize the client with the stored actions
     socket.emit('executeTransaction', actions[sessionName]);
+    socket.emit('sessionJoined');
   });
   
   socket.on('disconnect', function (){

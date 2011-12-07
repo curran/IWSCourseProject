@@ -23,11 +23,13 @@ var ASH = (function() {
     actionSource = 'client';
   });
   
-  
+  socket.on('sessionJoined',function(){
+    if(joinSessionCallback)
+      joinSessionCallback();
+  });
   
   // sends a request for a new range of resource Ids from the server
   function requestMoreIds(){
-    console.log("in requestMoreIds()");
     if(waitingForIdRange)
       console.error("requestMoreIds() called while waitingForIdRange was true! This should never happen.");
     waitingForIdRange = true;
@@ -47,7 +49,6 @@ var ASH = (function() {
     for(i in callbacksToCall)
       ASH.genResourceId(callbacksToCall[i]);
     
-    console.log("in grantMoreIds! data = ");
     for(i in data) console.log("  "+i+":"+data[i]);
   });
   
@@ -70,6 +71,9 @@ var ASH = (function() {
   var inTransaction = false; // true during a transaction (after begin() and before commit())
   
   var currentTransaction = []; // a list of atomic action strings
+
+  var joinSessionCallback = undefined; // Called after a session 
+  // is joined and all actions from that session have been executed
 
   return { // public interface
     registerPlugin: function (plugin) {
@@ -104,7 +108,10 @@ var ASH = (function() {
           resources[resource] = plugins[type].create(resource);
         }
         else
-          resources[resource].set(property,value);
+          if(resources[resource])
+            resources[resource].set(property,value);
+          else
+            console.error("ASH error: attempted to set a value '"+value+"' on an undefined resource with id '"+resource+"'");
       }
     },
     unset: function (resource, property) {
@@ -137,8 +144,10 @@ var ASH = (function() {
         console.error("ASH.commit() called without a matching ASH.begin(). This should never happen. To perform an ASH transaction, call ASH.begin(), do your (non-asynchronous!) stuff, then call ASH.commit(). There is not yet support for nested transactions.");
     },
     TYPE : "type",
-    joinSession: function(sessionName){
+    joinSession: function(sessionName, callback){
       socket.emit('joinSession', sessionName);
+      if(callback)
+        joinSessionCallback = callback;
     }
   };
 })();

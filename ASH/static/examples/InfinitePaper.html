@@ -19,9 +19,7 @@ function resize(){
 var pinch = undefined;
 function copyTouch(touch){
   return {
-    pageX:touch.pageX,
-    pageY:touch.pageY,
-    identifier:touch.identifier
+    pageX:touch.pageX, pageY:touch.pageY,identifier:touch.identifier
   };
 }
 function touchStart(e){
@@ -30,10 +28,6 @@ function touchStart(e){
       a:copyTouch(e.touches[0]), b:copyTouch(e.touches[1]),
       centerX: (viewMinX + viewMaxX)/2, spanX:viewMaxX - viewMinX,
       centerY: (viewMinY + viewMaxY)/2, spanY:viewMaxY - viewMinY,
-/*
-      viewMinX: viewMinX, viewMaxX: viewMaxX,
-      viewMinY: viewMinY, viewMaxY: viewMaxY
-*/
     }
   }
 }
@@ -73,7 +67,7 @@ function touchMove(e){
   }
 }
 function touchEnd(e){
-  //console.log("touchEnd");
+  
 }
 function orientationChange(){
   resize();
@@ -99,7 +93,8 @@ var defaultSizeOnScreen = 30;
 var viewMinX, viewMaxX, viewMinY, viewMaxY, panZoomResourceId = undefined;
 var goingRight=false, goingLeft=false, goingIn=false, goingOut=false, goingUp=false, goingDown=false;
 var dx=0, dy=0, dz=0, acceleration = 0.005, dampening = 0.9;
-ASH.joinSession("$sessionName");
+var epsilon = 0.001;
+
 //Set up the ASH example plugin for Labels
 ASH.registerPlugin({
   type: LABEL,
@@ -161,17 +156,35 @@ ASH.registerPlugin({
     graphicsDirty = true;
   }
 });
+
+function moving(){
+  return (Math.abs(dx) > epsilon || 
+          Math.abs(dy) > epsilon ||
+          Math.abs(dz) > epsilon);
+}
+
 ASH.registerPlugin({
   type: PANZOOM,
   create: function(resourceId){
+    panZoomResourceId = resourceId;
     return {
       set:function(property,value){
-        //assuming 'property' in {viewMinX,viewMaxX,viewMinY,viewMaxY}
-        //if(property === 'viewMinX') viewMinX = value;
-        //if(property === 'viewMaxX') viewMaxX = value;
-        //if(property === 'viewMinY') viewMinY = value;
-        //if(property === 'viewMaxY') viewMaxY = value;
-        //graphicsDirty = true;
+        //console.log("moving() = "+moving());
+        //console.log("dx = "+dx+" dy = "+dy+" dz = "+dz);
+        if(!moving()){
+          //assuming 'property' in {viewMinX,viewMaxX,viewMinY,viewMaxY}
+          value = Number(value);
+          if(property === 'viewMinX')
+            previousViewMinX = viewMinX = value;
+          else if(property === 'viewMaxX')
+            previousViewMaxX = viewMaxX = value;
+          else if(property === 'viewMinY')
+            previousViewMinY = viewMinY = value;
+          else if(property === 'viewMaxY')
+            previousViewMaxY = viewMaxY = value;
+          graphicsDirty = true;
+          panZoomResourceIsInitialized = true;
+        }
       },
       unset:function(property){
       }
@@ -180,6 +193,45 @@ ASH.registerPlugin({
   delete:function(resourceId){
   }
 });
+function syncPanZoom(){
+  if(panZoomChanged()){
+    ASH.begin();
+    syncPanZoomInTransaction();
+    ASH.commit();
+  }
+}
+var previousViewMinX = 0;
+var previousViewMaxX = 0;
+var previousViewMinY = 0;
+var previousViewMaxY = 0;
+
+function panZoomChanged(){
+  return (
+    previousViewMinX != viewMinX||
+    previousViewMaxX != viewMaxX||
+    previousViewMinY != viewMinY||
+    previousViewMaxY != viewMaxY
+  );
+}
+
+function syncPanZoomInTransaction(){
+  ASH.set(panZoomResourceId,'viewMinX',viewMinX);
+  ASH.set(panZoomResourceId,'viewMaxX',viewMaxX);
+  ASH.set(panZoomResourceId,'viewMinY',viewMinY);
+  ASH.set(panZoomResourceId,'viewMaxY',viewMaxY);
+}
+ASH.joinSession("$sessionName",function(){
+  if(!panZoomResourceId)
+    ASH.genResourceId(function(resourceId){
+      panZoomResourceId = resourceId;
+      ASH.begin();
+      ASH.set(panZoomResourceId,ASH.TYPE,PANZOOM);
+      syncPanZoomInTransaction();
+      ASH.commit();
+    });
+  setInterval(syncPanZoom,100);
+});
+
 function connectionExists(labelA, labelB){
   for(i in connections){
     var connection = connections[i];
@@ -268,20 +320,21 @@ function sketch(p){
     if (goingRight) dx += acceleration;
     if (goingUp)    dy -= acceleration;
     if (goingDown)  dy += acceleration;
+    
+    // when they get small, set them to zero
+    if(!(goingIn || goingOut || 
+         goingLeft || goingRight || 
+         goingUp || goingDown)){
+      if(!moving()){
+        dx = 0;
+        dy = 0;
+        dz = 0;
+      }
+    }
   }
   
   p.setup = function(){
     p.background(255);
-    ASH.genResourceId(function(resourceId){
-      panZoomResourceId = resourceId;
-      ASH.begin();
-      ASH.set(resourceId,ASH.TYPE,PANZOOM);
-      ASH.set(resourceId,'viewMinX',viewMinX);
-      ASH.set(resourceId,'viewMaxX',viewMaxX);
-      ASH.set(resourceId,'viewMinY',viewMinY);
-      ASH.set(resourceId,'viewMaxY',viewMaxY);
-      ASH.commit();
-    });
   };
   
   function screenToDataSpaceX(screenSpaceX){
