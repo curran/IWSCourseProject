@@ -47,6 +47,8 @@ function parseAction(actionString){
 function storeAction(sessionName, actionString){
   var action = parseAction(actionString);
   
+  console.log("action.value = "+action.value);
+  
   var sessionActions = actions[sessionName];
   
   if(!sessionActions)

@@ -12,7 +12,8 @@ var ASH = (function() {
   socket.on('executeTransaction', function (data) {
     actionSource = 'server';
     for(i in data){
-      var tokens = data[i].split(' ');
+      var action = data[i];
+      var tokens = action.split(' ');
       if(tokens[0] == 's')
       //commitTransaction("s "+resource+" "+property+" "+value);
         ASH.set(tokens[1],tokens[2],tokens[3]);
