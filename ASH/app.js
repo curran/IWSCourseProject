@@ -91,23 +91,27 @@ io.sockets.on('connection', function (socket) {
   });
   
   socket.on('disconnect', function (){
-    var sessionSockets = sockets[socketSessionName];
-    if(sessionSockets){
-      var i = sessionSockets.indexOf(socket);
-      sessionSockets.splice(i, 1);
+    if(socketSessionName){
+      var sessionSockets = sockets[socketSessionName];
+      if(sessionSockets){
+        var i = sessionSockets.indexOf(socket);
+        sessionSockets.splice(i, 1);
+      }
     }
   });
   
   socket.on('commitTransaction', function (data) {
-    // broadcast the actions
-    var sessionSockets = sockets[socketSessionName];
-    for(var i = 0; i < sessionSockets.length; i++)
-      sessionSockets[i].emit('executeTransaction', data);
-      
-    // store the actions
-    for(i in data)
-      storeAction(socketSessionName,data[i]);
-    console.log(data);
+    if(socketSessionName){
+      // broadcast the actions
+      var sessionSockets = sockets[socketSessionName];
+      for(var i = 0; i < sessionSockets.length; i++)
+        sessionSockets[i].emit('executeTransaction', data);
+        
+      // store the actions
+      for(i in data)
+        storeAction(socketSessionName,data[i]);
+      console.log(data);
+    }
   });
   
   socket.on('requestMoreIds', function(){
