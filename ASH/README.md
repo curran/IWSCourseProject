@@ -19,7 +19,21 @@ To run the ASH server and serve several example applications found in the static
  6. Run the server with the following command:
    - `node app.js`
  7. Access the example applications:
-   - http://localhost:8080/
+   - access http://localhost:8000/
+   - Both examples have the following features:
+     - The URLs for accessing the applications are of the form `applicationName/sessionName`.
+       - You can enter your own session name to create new sessions.
+       - Everyone with the same URL loaded sees the same thing.
+       - Updates occur in real time.
+   - Colored Circles - [code](https://github.com/curran/IWSCourseProject/blob/master/ASH/static/examples/ColoredCircles.html) - [demo](http://universalvisualization.org:8000/ColoredCircles/test) - A basic application demonstrating the capabilities of ASH.
+     - Click on empty space to create a randomly colored circle.
+     - Click on a circle to delete it.
+     - Click and drag a circle to move it.
+   - Infinite Paper - [code](https://github.com/curran/IWSCourseProject/blob/master/ASH/static/examples/InfinitePaper.html) - [demo](http://universalvisualization.org:8000/InfinitePaper/test) - An infinitely zoomable canvas for arranging multi-scale text labels with connections.
+     - Click on empty space to create a new text label. You will be prompted to enter text.
+     - Right click on a text label to delete it.
+     - Use the arrow keys for panning.
+     - Use the `c` and `d` keys for zooming, or use pinch-zoom on multi-touch devices (only tested on iPad).
 
 ## Architecture
 In the Model View Controller paradigm, ASH is responsible for managing the Model. Applications which use ASH must always go through the ASH API to make any changes to their Model. This is how ASH can accomplish full application model management.
